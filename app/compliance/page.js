@@ -99,54 +99,69 @@ export default function ComplianceDashboard() {
             const buyerEscrowIds = await getBuyerEscrows(walletAddress);
             const sellerEscrowIds = await getSellerEscrows(walletAddress);
             
-            // Combine and get details (in production, we'd batch this)
+            // Combine and get details
             const allEscrowIds = [...new Set([...buyerEscrowIds, ...sellerEscrowIds])];
             
-            // For demo, create mock compliance data
+            // Fetch real escrow details with compliance data
             const escrowsWithCompliance = await Promise.all(
                 allEscrowIds.slice(0, 10).map(async (id) => {
-                    // In production, this would fetch real escrow details
-                    // For demo, we'll create mock data
-                    const mockBuyerAddress = `0x${Math.random().toString(16).slice(2, 42)}`;
-                    const mockSellerAddress = `0x${Math.random().toString(16).slice(2, 42)}`;
-                    
-                    // Mock KYC levels and risk scores
-                    const buyerKycLevel = Math.floor(Math.random() * 4);
-                    const sellerKycLevel = Math.floor(Math.random() * 4);
-                    const buyerRiskScore = Math.floor(Math.random() * 100);
-                    const sellerRiskScore = Math.floor(Math.random() * 100);
-                    const amount = (Math.random() * 10000).toFixed(2);
-                    const isFlagged = buyerRiskScore > 80 || sellerRiskScore > 80 || buyerKycLevel === 0;
+                    try {
+                        // Get real escrow details from blockchain
+                        const escrow = await getEscrow(id);
+                        
+                        // Get real compliance info for buyer and seller
+                        const [buyerCompliance, sellerCompliance] = await Promise.all([
+                            getComplianceInfo(escrow.buyer),
+                            getComplianceInfo(escrow.seller)
+                        ]);
+                        
+                        // Get AML risk scores
+                        const [buyerRiskScore, sellerRiskScore] = await Promise.all([
+                            getAMLRiskScore(escrow.buyer),
+                            getAMLRiskScore(escrow.seller)
+                        ]);
+                        
+                        const isFlagged = escrow.fraudFlagged || 
+                                        buyerRiskScore > 80 || 
+                                        sellerRiskScore > 80 || 
+                                        buyerCompliance.level === 0;
 
-                    return {
-                        id: Number(id),
-                        buyer: mockBuyerAddress,
-                        seller: mockSellerAddress,
-                        amount,
-                        buyerKycLevel,
-                        sellerKycLevel,
-                        buyerRiskScore,
-                        sellerRiskScore,
-                        status: isFlagged ? 'Flagged' : ['Active', 'Released', 'Active'][Math.floor(Math.random() * 3)],
-                        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-                        isFlagged
-                    };
+                        return {
+                            id: Number(id),
+                            buyer: escrow.buyer,
+                            seller: escrow.seller,
+                            amount: (Number(escrow.amount) / 1e6).toFixed(2), // Convert from 6 decimals
+                            buyerKycLevel: buyerCompliance.level,
+                            sellerKycLevel: sellerCompliance.level,
+                            buyerRiskScore: Number(buyerRiskScore),
+                            sellerRiskScore: Number(sellerRiskScore),
+                            status: getStatusText(escrow.status),
+                            createdAt: new Date(Number(escrow.createdAt) * 1000).toLocaleDateString(),
+                            isFlagged
+                        };
+                    } catch (error) {
+                        console.error(`Error loading escrow ${id}:`, error);
+                        return null;
+                    }
                 })
             );
+            
+            // Filter out any failed loads
+            const validEscrows = escrowsWithCompliance.filter(e => e !== null);
 
-            setEscrows(escrowsWithCompliance);
+            setEscrows(validEscrows);
             
             // Calculate statistics
-            const flagged = escrowsWithCompliance.filter(e => e.isFlagged).length;
-            const highRisk = escrowsWithCompliance.filter(e => 
+            const flagged = validEscrows.filter(e => e.isFlagged).length;
+            const highRisk = validEscrows.filter(e => 
                 e.buyerRiskScore > 60 || e.sellerRiskScore > 60
             ).length;
-            const noKyc = escrowsWithCompliance.filter(e => 
+            const noKyc = validEscrows.filter(e => 
                 e.buyerKycLevel === 0 || e.sellerKycLevel === 0
             ).length;
 
             setStats({
-                total: escrowsWithCompliance.length,
+                total: validEscrows.length,
                 flagged,
                 highRisk,
                 noKyc

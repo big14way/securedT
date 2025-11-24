@@ -429,14 +429,14 @@ export default function MyEscrowsPage() {
         }
     ];
 
-    // Use the loaded escrows or filter mock data appropriately
+    // Filter escrows by status
     const activeEscrows = isContractAvailable() 
         ? escrows.filter(e => e.status === EscrowStatus.Active)
-        : mockEscrows.filter(e => e.status === 'active' || e.status === 'pending_release');
+        : []; // Show empty state if contract not available
         
     const completedEscrows = isContractAvailable()
         ? escrows.filter(e => e.status === EscrowStatus.Released || e.status === EscrowStatus.Refunded)
-        : mockEscrows.filter(e => e.status === 'completed' || e.status === 'refunded');
+        : []; // Show empty state if contract not available
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px' }}>
