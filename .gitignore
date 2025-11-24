@@ -6,6 +6,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Screenshots and documentation images
+img/
+
 # Next.js
 .next/
 out/

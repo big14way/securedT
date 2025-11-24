@@ -322,52 +322,6 @@ Visit [http://localhost:3000](http://localhost:3000) to see the application.
 
 ---
 
-## Screenshots
-
-<p align="center">
-  <img src="img/home_page.png" alt="SecuredTransfer Home Page" width="800"/>
-  <br/>
-  <strong>Home Page</strong>
-  <br/><br/>
-</p>
-
-<p align="center">
-  <img src="img/safesend_contract.png" alt="SecuredTransfer Contract Interface" width="800"/>
-  <br/>
-  <strong>SecuredTransfer Contract Interface</strong>
-  <br/><br/>
-</p>
-
-<p align="center">
-  <img src="img/oracle_detection_calls_before)_release.png" alt="Oracle Detection Calls Before Release" width="800"/>
-  <br/>
-  <strong>Oracle Detection Calls Before Release</strong>
-  <br/><br/>
-</p>
-
-<p align="center">
-  <img src="img/completed_transactions.png" alt="Completed Transactions" width="800"/>
-  <br/>
-  <strong>Completed Transactions</strong>
-  <br/><br/>
-</p>
-
-<p align="center">
-  <img src="img/transaction_history.png" alt="Transaction History" width="800"/>
-  <br/>
-  <strong>Transaction History</strong>
-  <br/><br/>
-</p>
-
-<p align="center">
-  <img src="img/blockscout_view_of_contract_in_app.png" alt="Blockscout View of Contract in App" width="800"/>
-  <br/>
-  <strong>Blockscout View of Contract in App</strong>
-  <br/><br/>
-</p>
-
----
-
 ## License
 
 MIT License - see LICENSE file for details
