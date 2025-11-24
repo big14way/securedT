@@ -1,9 +1,5 @@
 # SecuredTransfer – Stablecoin Consumer Protection on Mantle Network
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/cbonoz/online25/refs/heads/main/public/logo.png" alt="SecuredTransfer Logo" width="200"/>
-</p>
-
 > Bringing PayPal-like consumer protection to on-chain stablecoin payments using fraud oracles and transparent smart contracts on **Mantle Network's ultra-low-cost Layer 2**.
 
 ## The Problem
