@@ -149,7 +149,9 @@ KEY ARCHITECTURAL PIECES
 
 ## Tech Stack
 
-**Frontend:** Next.js 14, Ant Design, Viem, Dynamic Wallet SDK
+**Frontend:** Next.js 14, Ant Design, Viem, Wagmi, Dynamic Wallet SDK
+
+**Wallet Integration:** WalletConnect v2, MetaMask, Coinbase Wallet, Rabby, and 300+ wallets
 
 **Smart Contracts:** Solidity ^0.8.28, Hardhat, OpenZeppelin, ERC-721, ERC-20
 
@@ -160,6 +162,44 @@ KEY ARCHITECTURAL PIECES
 **Stablecoin:** USDT on Mantle
 - Mainnet: `0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE`
 - Alternative: USDC `0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9`
+
+---
+
+## Wallet Integration
+
+SecuredTransfer uses **WalletConnect v2** protocol integrated through Dynamic SDK for universal wallet support:
+
+### Supported Wallets
+- 🦊 **MetaMask** - Browser extension and mobile
+- 🔵 **Coinbase Wallet** - Self-custodial wallet
+- 🔌 **WalletConnect** - 300+ compatible wallets
+- 🐰 **Rabby** - Multi-chain wallet
+- And many more through WalletConnect protocol
+
+### Key Features
+- **One-Click Connection** - Connect with any wallet instantly
+- **Multi-Chain Support** - Seamlessly switch between Mantle Mainnet and Sepolia Testnet
+- **Mobile Compatible** - Works with mobile wallets via WalletConnect QR codes
+- **Auto Network Switching** - Automatically prompts to switch to Mantle Network
+- **Session Persistence** - Stay connected across page refreshes
+
+### WalletConnect Configuration
+The project is configured with WalletConnect Project ID: `1eebe528ca0ce94a99ceaa2e915058d7`
+
+To customize or get your own project ID:
+1. Visit [WalletConnect Cloud](https://cloud.walletconnect.com/)
+2. Create a new project
+3. Copy your Project ID
+4. Update `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` in `.env`
+
+### Network Configuration
+- **Mantle Mainnet** (Chain ID: 5000)
+  - RPC: `https://rpc.mantle.xyz`
+  - Explorer: `https://explorer.mantle.xyz`
+
+- **Mantle Sepolia Testnet** (Chain ID: 5003)
+  - RPC: `https://rpc.sepolia.mantle.xyz`
+  - Explorer: `https://explorer.sepolia.mantle.xyz`
 
 ---
 
@@ -236,9 +276,10 @@ All contracts are deployed and can be verified on [Mantle Sepolia Explorer](http
 
 ### Prerequisites
 
-- Node.js 18+
-- Yarn or npm
-- MetaMask or compatible Web3 wallet
+- Node.js 18+ and Yarn
+- MetaMask, Coinbase Wallet, or any WalletConnect-compatible wallet
+- Mantle Sepolia testnet MNT for gas fees
+- USDT testnet tokens
 
 ### Installation
 
@@ -264,9 +305,19 @@ yarn install
 # Copy example file
 cp .env.example .env
 
-# Add your configuration
-NEXT_PUBLIC_CONTRACT_ADDRESS=0x... # Your deployed SecuredTransferContract
-NEXT_PUBLIC_NETWORK=sepolia # or mainnet
+# Configure your environment
+NEXT_PUBLIC_CONTRACT_ADDRESS=0xb8a1446e1a9feb78c0e83196cda8366a53df5376
+NEXT_PUBLIC_COMPLIANCE_ORACLE_ADDRESS=0x45e774cbd5877770bde1324347fc978939c884a3
+NEXT_PUBLIC_INVOICE_NFT_ADDRESS=0x71f43c6c9598369f94dbd162dadb24c3d8df675c
+NEXT_PUBLIC_NETWORK=testnet # or mainnet
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=1eebe528ca0ce94a99ceaa2e915058d7
+NEXT_PUBLIC_DYNAMIC_ENV_ID=your_dynamic_environment_id # Optional
+```
+
+5. **Run development server**
+```bash
+yarn dev
+# Open http://localhost:3000
 ```
 
 ### Deployment
