@@ -136,6 +136,9 @@ KEY ARCHITECTURAL PIECES
 
 * **PYUSD Escrow** – Secure smart contract holds buyer funds until completion
 * **Automated Fraud Detection** – Real-time checks with automatic refunds for flagged transactions
+* **Invoice Tokenization (RWA)** – ERC-721 NFTs representing invoices for trading and factoring
+* **Invoice Marketplace** – Buy and sell tokenized invoices at discounted prices
+* **Invoice Factoring** – Instant liquidity by selling invoices before payment due date
 * **Buyer Protection** – Release funds or request refunds with transparent on-chain status
 * **Blockscout SDK Integration** – Real-time transaction monitoring and explorer integration
 * **Multi-Wallet Support** – Dynamic wallet connection (MetaMask, Coinbase, WalletConnect, etc.)
@@ -192,12 +195,18 @@ SecuredTransfer combines on-chain logic, stablecoin security, and oracle-based f
 
 ### SecuredTransferContract Flow
 
-1. **Create Escrow** - Buyer approves PYUSD → calls `deposit()` → contract transfers funds and creates escrow → oracle checks for fraud (blacklist, amount limits, same-address) → if flagged: auto-refund + revert, if clean: escrow created with ID
+1. **Create Escrow** - Buyer approves PYUSD → calls `deposit()` → contract transfers funds and creates escrow → **mints Invoice NFT to seller** → oracle checks for fraud (blacklist, amount limits, same-address) → if flagged: auto-refund + revert, if clean: escrow created with ID and tradable invoice NFT
 
 2. **Transaction Outcomes**
-   - **Normal**: Buyer calls `release()` → funds sent to seller
-   - **Dispute**: Buyer calls `refund()` → funds returned to buyer
-   - **Fraud**: Oracle calls `markFraud()` → automatic buyer refund
+   - **Normal**: Buyer or invoice NFT owner calls `release()` → funds sent to current invoice owner (enabling factoring) → invoice NFT burned
+   - **Dispute**: Buyer calls `refund()` → funds returned to buyer → invoice NFT burned
+   - **Fraud**: Oracle calls `markFraud()` → automatic buyer refund → invoice NFT burned
+
+3. **Invoice Trading** (RWA Feature)
+   - Seller lists invoice NFT on marketplace at discount price (e.g., $950 for $1000 invoice)
+   - Buyer purchases discounted invoice → pays seller immediately
+   - New invoice owner receives full amount when escrow is released
+   - Enables invoice factoring and early payment liquidity
 
 3. **Oracle Controls** - Blacklist management, transaction limits, manual flagging, dispute window configuration
 
@@ -245,10 +254,15 @@ Users trust the immutable contract code, not the developer.
 
 ## Deployed Contracts (Mantle Sepolia Testnet)
 
-- **SecuredTransferContract:** [`0xa273fc650baa2dc55fde63e733178f7b645372a1`](https://explorer.sepolia.mantle.xyz/address/0xa273fc650baa2dc55fde63e733178f7b645372a1)
-- **ComplianceOracle:** [`0xe9da61e2728b6ad3dd41595c139195d52605c1ea`](https://explorer.sepolia.mantle.xyz/address/0xe9da61e2728b6ad3dd41595c139195d52605c1ea)
+- **SecuredTransferContract:** [`0xb8a1446e1a9feb78c0e83196cda8366a53df5376`](https://explorer.sepolia.mantle.xyz/address/0xb8a1446e1a9feb78c0e83196cda8366a53df5376)
+- **ComplianceOracle:** [`0x45e774cbd5877770bde1324347fc978939c884a3`](https://explorer.sepolia.mantle.xyz/address/0x45e774cbd5877770bde1324347fc978939c884a3)
+- **InvoiceNFT (RWA):** [`0x71f43c6c9598369f94dbd162dadb24c3d8df675c`](https://explorer.sepolia.mantle.xyz/address/0x71f43c6c9598369f94dbd162dadb24c3d8df675c)
 - **Network:** Mantle Sepolia Testnet (Chain ID: 5003)
 - **Deployed:** 2025-11-24
+
+### Contract Verification
+
+All contracts are deployed and can be verified on [Mantle Sepolia Explorer](https://explorer.sepolia.mantle.xyz). The source code is available in the `/contracts/contracts` directory.
 
 ---
 

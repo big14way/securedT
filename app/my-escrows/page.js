@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Typography, Space, Button, Table, Tag, Alert, Tabs } from 'antd';
+import { Card, Typography, Space, Button, Table, Tag, Alert, Tabs, Modal, InputNumber, message } from 'antd';
 import { 
     EyeOutlined, 
     DollarOutlined, 
@@ -10,7 +10,9 @@ import {
     CheckCircleOutlined,
     ExclamationCircleOutlined,
     HistoryOutlined,
-    LinkOutlined
+    LinkOutlined,
+    FileTextOutlined,
+    ShoppingOutlined
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { APP_NAME } from '../constants';
@@ -39,6 +41,11 @@ export default function MyEscrowsPage() {
     const [isUserFraudOracle, setIsUserFraudOracle] = useState(false);
     const [isFraudOracleActive, setIsFraudOracleActive] = useState(false);
     const [oracleCheckComplete, setOracleCheckComplete] = useState(false);
+    const [invoices, setInvoices] = useState([]);
+    const [loadingInvoices, setLoadingInvoices] = useState(false);
+    const [listModalVisible, setListModalVisible] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [listPrice, setListPrice] = useState(0);
     const { address: walletAddress } = useWalletAddress();
     const { 
         showContractTransactions, 
@@ -80,6 +87,155 @@ export default function MyEscrowsPage() {
 
         loadEscrows();
     }, [walletAddress]);
+
+    // Load user's invoice NFTs
+    useEffect(() => {
+        const loadInvoices = async () => {
+            const invoiceNFTAddress = process.env.NEXT_PUBLIC_INVOICE_NFT_ADDRESS;
+            
+            if (!invoiceNFTAddress || !walletAddress) {
+                setInvoices([]);
+                return;
+            }
+
+            setLoadingInvoices(true);
+            try {
+                const { createPublicClient, http, formatUnits } = await import('viem');
+                const { ACTIVE_CHAIN, STABLECOIN_DECIMALS } = await import('../constants');
+                
+                const publicClient = createPublicClient({
+                    chain: ACTIVE_CHAIN,
+                    transport: http()
+                });
+
+                const INVOICE_NFT_ABI = [
+                    {
+                        "inputs": [{"type": "address", "name": "owner"}],
+                        "name": "getInvoicesByOwner",
+                        "outputs": [{"type": "uint256[]"}],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [{"type": "uint256", "name": "tokenId"}],
+                        "name": "getInvoice",
+                        "outputs": [{
+                            "type": "tuple",
+                            "components": [
+                                {"type": "uint256", "name": "escrowId"},
+                                {"type": "uint256", "name": "amount"},
+                                {"type": "uint256", "name": "dueDate"},
+                                {"type": "address", "name": "issuer"},
+                                {"type": "address", "name": "payer"},
+                                {"type": "address", "name": "currentOwner"},
+                                {"type": "uint8", "name": "status"},
+                                {"type": "uint256", "name": "listedPrice"},
+                                {"type": "uint256", "name": "createdAt"}
+                            ]
+                        }],
+                        "stateMutability": "view",
+                        "type": "function"
+                    }
+                ];
+
+                const tokenIds = await publicClient.readContract({
+                    address: invoiceNFTAddress,
+                    abi: INVOICE_NFT_ABI,
+                    functionName: 'getInvoicesByOwner',
+                    args: [walletAddress]
+                });
+
+                const invoicesData = await Promise.all(
+                    tokenIds.map(async (tokenId) => {
+                        const invoice = await publicClient.readContract({
+                            address: invoiceNFTAddress,
+                            abi: INVOICE_NFT_ABI,
+                            functionName: 'getInvoice',
+                            args: [tokenId]
+                        });
+
+                        return {
+                            tokenId: tokenId.toString(),
+                            escrowId: invoice.escrowId.toString(),
+                            amount: formatUnits(invoice.amount, STABLECOIN_DECIMALS),
+                            listedPrice: invoice.listedPrice > 0 ? formatUnits(invoice.listedPrice, STABLECOIN_DECIMALS) : null,
+                            dueDate: new Date(Number(invoice.dueDate) * 1000).toLocaleDateString(),
+                            issuer: invoice.issuer,
+                            payer: invoice.payer,
+                            status: ['Active', 'Released', 'Refunded', 'Listed'][invoice.status],
+                            rawAmount: invoice.amount,
+                            rawListedPrice: invoice.listedPrice
+                        };
+                    })
+                );
+
+                setInvoices(invoicesData);
+            } catch (error) {
+                console.error('Error loading invoices:', error);
+                setInvoices([]);
+            } finally {
+                setLoadingInvoices(false);
+            }
+        };
+
+        loadInvoices();
+    }, [walletAddress]);
+
+    const handleListInvoice = (invoice) => {
+        setSelectedInvoice(invoice);
+        const suggestedPrice = parseFloat(invoice.amount) * 0.95; // Suggest 5% discount
+        setListPrice(suggestedPrice);
+        setListModalVisible(true);
+    };
+
+    const confirmListInvoice = async () => {
+        if (!selectedInvoice || !listPrice) return;
+
+        try {
+            message.loading('Listing invoice for sale...', 0);
+
+            const { createWalletClient, custom, parseUnits: viemParseUnits } = await import('viem');
+            const { ACTIVE_CHAIN, STABLECOIN_DECIMALS } = await import('../constants');
+            
+            const walletClient = createWalletClient({
+                chain: ACTIVE_CHAIN,
+                transport: custom(window.ethereum)
+            });
+
+            const invoiceNFTAddress = process.env.NEXT_PUBLIC_INVOICE_NFT_ADDRESS;
+            const listPriceWei = viemParseUnits(listPrice.toString(), STABLECOIN_DECIMALS);
+
+            const INVOICE_NFT_ABI = [
+                {
+                    "inputs": [{"type": "uint256", "name": "tokenId"}, {"type": "uint256", "name": "price"}],
+                    "name": "listInvoiceForSale",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+
+            const tx = await walletClient.writeContract({
+                address: invoiceNFTAddress,
+                abi: INVOICE_NFT_ABI,
+                functionName: 'listInvoiceForSale',
+                args: [BigInt(selectedInvoice.tokenId), listPriceWei],
+                account: walletAddress
+            });
+
+            message.destroy();
+            message.success('Invoice listed for sale successfully!');
+            setListModalVisible(false);
+            
+            // Reload invoices
+            window.location.reload();
+
+        } catch (error) {
+            message.destroy();
+            console.error('Error listing invoice:', error);
+            message.error(error.message || 'Failed to list invoice');
+        }
+    };
 
     // Check if user is fraud oracle
     useEffect(() => {
@@ -411,6 +567,134 @@ export default function MyEscrowsPage() {
                     </Card>
                 </TabPane>
 
+                <TabPane 
+                    tab={
+                        <Space>
+                            <FileTextOutlined />
+                            My Invoices ({invoices.length})
+                        </Space>
+                    } 
+                    key="invoices"
+                >
+                    <Card title="Invoice NFTs" extra={
+                        <Button 
+                            type="primary"
+                            icon={<ShoppingOutlined />}
+                            onClick={() => router.push('/marketplace')}
+                        >
+                            View Marketplace
+                        </Button>
+                    }>
+                        {process.env.NEXT_PUBLIC_INVOICE_NFT_ADDRESS ? (
+                            <Table
+                                loading={loadingInvoices}
+                                dataSource={invoices}
+                                rowKey="tokenId"
+                                pagination={false}
+                                columns={[
+                                    {
+                                        title: 'Token ID',
+                                        dataIndex: 'tokenId',
+                                        key: 'tokenId',
+                                        render: (tokenId) => <Tag color="blue">#{tokenId}</Tag>
+                                    },
+                                    {
+                                        title: 'Escrow ID',
+                                        dataIndex: 'escrowId',
+                                        key: 'escrowId',
+                                        render: (escrowId) => (
+                                            <Button 
+                                                type="link" 
+                                                size="small"
+                                                onClick={() => router.push(`/escrow/${escrowId}`)}
+                                            >
+                                                #{escrowId}
+                                            </Button>
+                                        )
+                                    },
+                                    {
+                                        title: 'Amount (USDT)',
+                                        dataIndex: 'amount',
+                                        key: 'amount',
+                                        render: (amount) => <Text strong>${amount}</Text>
+                                    },
+                                    {
+                                        title: 'Listed Price',
+                                        dataIndex: 'listedPrice',
+                                        key: 'listedPrice',
+                                        render: (price) => price ? <Text type="success">${price}</Text> : <Text type="secondary">Not listed</Text>
+                                    },
+                                    {
+                                        title: 'Due Date',
+                                        dataIndex: 'dueDate',
+                                        key: 'dueDate',
+                                        render: (date) => <Text><ClockCircleOutlined /> {date}</Text>
+                                    },
+                                    {
+                                        title: 'Status',
+                                        dataIndex: 'status',
+                                        key: 'status',
+                                        render: (status) => {
+                                            const colors = {
+                                                'Active': 'blue',
+                                                'Listed': 'green',
+                                                'Released': 'default',
+                                                'Refunded': 'red'
+                                            };
+                                            return <Tag color={colors[status] || 'default'}>{status}</Tag>;
+                                        }
+                                    },
+                                    {
+                                        title: 'Actions',
+                                        key: 'actions',
+                                        render: (record) => (
+                                            <Space>
+                                                {record.status === 'Active' && (
+                                                    <Button
+                                                        type="primary"
+                                                        size="small"
+                                                        icon={<DollarOutlined />}
+                                                        onClick={() => handleListInvoice(record)}
+                                                    >
+                                                        List for Sale
+                                                    </Button>
+                                                )}
+                                                {record.status === 'Listed' && (
+                                                    <Tag color="success">Listed on Marketplace</Tag>
+                                                )}
+                                            </Space>
+                                        )
+                                    }
+                                ]}
+                                locale={{
+                                    emptyText: (
+                                        <div style={{ textAlign: 'center', padding: '40px' }}>
+                                            <FileTextOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
+                                            <Title level={4} style={{ color: '#999' }}>No Invoice NFTs</Title>
+                                            <Paragraph style={{ color: '#666' }}>
+                                                Create an escrow to automatically mint an invoice NFT
+                                            </Paragraph>
+                                            <Button 
+                                                type="primary" 
+                                                onClick={() => router.push('/escrow')}
+                                            >
+                                                Create Escrow
+                                            </Button>
+                                        </div>
+                                    )
+                                }}
+                            />
+                        ) : (
+                            <Alert
+                                message="Invoice NFT Not Deployed"
+                                description="The Invoice NFT contract has not been deployed yet. Invoice tokenization features are not available."
+                                type="info"
+                                showIcon
+                            />
+                        )}
+                    </Card>
+                </TabPane>
+
                 {isUserFraudOracle && isFraudOracleActive && (
                     <TabPane 
                         tab={
@@ -445,6 +729,59 @@ export default function MyEscrowsPage() {
                     </TabPane>
                 )}
             </Tabs>
+
+            {/* List Invoice Modal */}
+            <Modal
+                title="List Invoice for Sale"
+                open={listModalVisible}
+                onOk={confirmListInvoice}
+                onCancel={() => setListModalVisible(false)}
+                okText="List Invoice"
+            >
+                {selectedInvoice && (
+                    <div>
+                        <div style={{ marginBottom: '16px' }}>
+                            <Text>Invoice Token ID: </Text>
+                            <Tag color="blue">#{selectedInvoice.tokenId}</Tag>
+                        </div>
+                        
+                        <div style={{ marginBottom: '16px' }}>
+                            <Text>Original Amount: </Text>
+                            <Text strong>${selectedInvoice.amount} USDT</Text>
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <Text>List Price (USDT):</Text>
+                            <InputNumber
+                                style={{ width: '100%', marginTop: '8px' }}
+                                value={listPrice}
+                                onChange={setListPrice}
+                                min={1}
+                                max={parseFloat(selectedInvoice.amount)}
+                                precision={2}
+                                prefix="$"
+                            />
+                        </div>
+
+                        {listPrice > 0 && (
+                            <div style={{ marginBottom: '16px' }}>
+                                <Text>Discount: </Text>
+                                <Tag color="green">
+                                    {((parseFloat(selectedInvoice.amount) - listPrice) / parseFloat(selectedInvoice.amount) * 100).toFixed(2)}%
+                                </Tag>
+                            </div>
+                        )}
+
+                        <Alert
+                            message="Invoice Factoring"
+                            description="By listing your invoice at a discounted price, you get instant liquidity. The buyer will receive the full amount when the escrow is released."
+                            type="info"
+                            showIcon
+                            style={{ marginTop: '16px' }}
+                        />
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }

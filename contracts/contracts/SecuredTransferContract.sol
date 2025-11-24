@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./IComplianceOracle.sol";
+import "./IInvoiceNFT.sol";
 
 /**
  * @title SecuredTransferContract
@@ -14,6 +15,7 @@ import "./IComplianceOracle.sol";
 contract SecuredTransferContract is Ownable, ReentrancyGuard {
     IERC20 public immutable pyusdToken;
     address public fraudOracle; // Now points to ComplianceOracle
+    address public invoiceNFT; // Invoice tokenization contract
     
     uint256 public escrowCounter = 10000; // Start IDs at 10000 for better UX.
     
@@ -69,6 +71,17 @@ contract SecuredTransferContract is Ownable, ReentrancyGuard {
     event OracleUpdated(
         address indexed oldOracle,
         address indexed newOracle
+    );
+    
+    event InvoiceNFTUpdated(
+        address indexed oldInvoiceNFT,
+        address indexed newInvoiceNFT
+    );
+    
+    event InvoiceMinted(
+        uint256 indexed escrowId,
+        uint256 indexed tokenId,
+        address indexed seller
     );
     
     modifier onlyFraudOracle() {
@@ -142,6 +155,21 @@ contract SecuredTransferContract is Ownable, ReentrancyGuard {
         
         emit Deposited(escrowId, msg.sender, seller, amount, description);
         
+        // Mint invoice NFT if InvoiceNFT contract is configured
+        if (invoiceNFT != address(0)) {
+            try IInvoiceNFT(invoiceNFT).mintInvoice(
+                escrowId,
+                seller,      // issuer (seller)
+                msg.sender,  // payer (buyer)
+                amount,
+                block.timestamp + 30 days  // Default 30 day due date
+            ) returns (uint256 tokenId) {
+                emit InvoiceMinted(escrowId, tokenId, seller);
+            } catch {
+                // Invoice minting failed but escrow continues
+            }
+        }
+        
         // Check compliance oracle if configured
         if (fraudOracle != address(0)) {
             try IComplianceOracle(fraudOracle).checkEscrow(
@@ -185,13 +213,44 @@ contract SecuredTransferContract is Ownable, ReentrancyGuard {
     function release(uint256 escrowId) 
         external 
         escrowExists(escrowId) 
-        onlyBuyer(escrowId) 
         nonReentrant 
     {
         Escrow storage escrow = escrows[escrowId];
         require(escrow.status == EscrowStatus.Active, "Escrow is not active");
         require(!escrow.fraudFlagged, "Cannot release flagged escrow");
         
+        // Only buyer or current invoice owner can release
+        if (invoiceNFT != address(0)) {
+            uint256 tokenId = IInvoiceNFT(invoiceNFT).getTokenByEscrow(escrowId);
+            if (tokenId != 0) {
+                address invoiceOwner = IInvoiceNFT(invoiceNFT).ownerOf(tokenId);
+                require(
+                    msg.sender == escrow.buyer || msg.sender == invoiceOwner,
+                    "Only buyer or invoice owner can release"
+                );
+                
+                // Transfer funds to current invoice owner (factoring)
+                escrow.status = EscrowStatus.Released;
+                
+                require(
+                    pyusdToken.transfer(invoiceOwner, escrow.amount),
+                    "PYUSD transfer to invoice owner failed"
+                );
+                
+                // Update invoice status and burn NFT
+                IInvoiceNFT(invoiceNFT).updateInvoiceStatus(
+                    escrowId,
+                    IInvoiceNFT.InvoiceStatus.Released
+                );
+                IInvoiceNFT(invoiceNFT).burnInvoice(escrowId);
+                
+                emit Released(escrowId, escrow.buyer, invoiceOwner, escrow.amount);
+                return;
+            }
+        }
+        
+        // Fallback to original logic if no invoice NFT
+        require(msg.sender == escrow.buyer, "Only buyer can call this");
         escrow.status = EscrowStatus.Released;
         
         require(
@@ -227,6 +286,21 @@ contract SecuredTransferContract is Ownable, ReentrancyGuard {
             pyusdToken.transfer(escrow.buyer, escrow.amount),
             "PYUSD transfer to buyer failed"
         );
+        
+        // Burn invoice NFT if it exists
+        if (invoiceNFT != address(0)) {
+            try IInvoiceNFT(invoiceNFT).getTokenByEscrow(escrowId) returns (uint256 tokenId) {
+                if (tokenId != 0) {
+                    IInvoiceNFT(invoiceNFT).updateInvoiceStatus(
+                        escrowId,
+                        IInvoiceNFT.InvoiceStatus.Refunded
+                    );
+                    IInvoiceNFT(invoiceNFT).burnInvoice(escrowId);
+                }
+            } catch {
+                // Invoice burning failed but refund continues
+            }
+        }
         
         emit Refunded(escrowId, escrow.buyer, escrow.amount);
     }
@@ -269,6 +343,19 @@ contract SecuredTransferContract is Ownable, ReentrancyGuard {
         fraudOracle = newOracle;
         
         emit OracleUpdated(oldOracle, newOracle);
+    }
+    
+    /**
+     * @dev Update invoice NFT contract address (only owner)
+     * @param newInvoiceNFT New InvoiceNFT contract address
+     */
+    function updateInvoiceNFT(address newInvoiceNFT) external onlyOwner {
+        require(newInvoiceNFT != address(0), "Invalid InvoiceNFT address");
+        
+        address oldInvoiceNFT = invoiceNFT;
+        invoiceNFT = newInvoiceNFT;
+        
+        emit InvoiceNFTUpdated(oldInvoiceNFT, newInvoiceNFT);
     }
     
     /**

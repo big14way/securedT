@@ -10,7 +10,8 @@ import {
     HistoryOutlined,
     SafetyOutlined,
     DashboardOutlined,
-    CheckCircleOutlined
+    CheckCircleOutlined,
+    ShoppingOutlined
 } from '@ant-design/icons';
 import Logo from './Logo';
 import { useBlockscout } from '../hooks/useBlockscout';
@@ -69,6 +70,12 @@ export default function Navigation() {
             label: 'My Escrows',
             icon: <HomeOutlined style={{ color: '#4f4d4c' }} />, 
             path: '/my-escrows'
+        },
+        walletAddress && {
+            key: 'marketplace',
+            label: 'Invoice Marketplace',
+            icon: <ShoppingOutlined />,
+            path: '/marketplace'
         },
         walletAddress && {
             key: 'kyc',
