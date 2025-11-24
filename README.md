@@ -1,48 +1,54 @@
-# SecuredTransfer – Stablecoin Consumer Protection on Mantle Network
+# SecuredTransfer – RWA Invoice Factoring on Mantle Network
 
-> Bringing PayPal-like consumer protection to on-chain stablecoin payments using fraud oracles and transparent smart contracts on **Mantle Network's ultra-low-cost Layer 2**.
+> Tokenizing real-world invoices as tradable NFTs with instant liquidity through blockchain-based escrow and compliance on **Mantle Network's ultra-low-cost Layer 2**.
 
 ## The Problem
 
-Traditional payment systems on Web2 offer robust buyer protection and fraud detection, but can often come with high fees (ex: 2-3% per transaction) and centralized control. Meanwhile, Web3 payments offer low costs and transparency but lack consumer protection—once you send crypto, it's gone. Even on Layer 1 chains, gas fees can be prohibitively expensive for everyday transactions.
+**Traditional Invoice Factoring** has high fees (2-5%), centralized approval, slow processing (days to weeks), and high minimums ($100k+). **Crypto Payments** lack buyer protection and compliance integration.
 
-**SecuredTransfer** is a decentralized escrow platform built on **Mantle Network** that combines the security of traditional payment processors with the ultra-low-cost transparency of Layer 2 blockchain technology. By using **USDT** (Tether stablecoin) and a modular fraud oracle architecture on Mantle's high-performance L2, SecuredTransfer enables:
+**SecuredTransfer** is a decentralized invoice factoring platform on **Mantle Network** that tokenizes invoices as ERC-721 NFTs for instant liquidity. Using **USDT** stablecoin and compliance oracles, SecuredTransfer enables:
 
-**🛡️ Enterprise-Grade Fraud Protection at Blockchain Costs**
-- Real-time fraud detection during every transaction
-- Automatic buyer refunds when fraud is detected
-- No payment processing fees—just gas costs
+**💰 Invoice Tokenization & Factoring (RWA)**
+- Automatic ERC-721 NFT minting for every escrow
+- Trade invoices on marketplace at discounted prices
+- Instant liquidity for sellers (sell $1000 invoice for $950)
+- ROI opportunities for buyers (earn from discounts)
 
-**🔄 Evolving Security Without Contract Redeployment**
-- Fraud detection algorithm lives in a separate, upgradeable oracle contract
-- New fraud patterns can be detected by simply updating the oracle
-- SecuredTransferContract remains immutable while security evolves
-- Oracle maintained by specialized fraud detection authorities
+**🛡️ Compliance & Security**
+- KYC/AML integration with 4-level verification system
+- Transaction limits based on KYC level ($1k to $1M)
+- Automatic fraud detection and blacklist management
+- Buyer protection with escrow and refund capabilities
 
-**💰 Ultra-Low Cost on Mantle Network**
-- Escrow creation: ~$0.10-0.20 (vs $10-20 on Ethereum L1)
-- Oracle consultation: ~$0.05-0.10 per escrow
-- **99% cost reduction** compared to Ethereum Layer 1
-- Compare to: 2-3% fee on a $1,000 transaction = $20-30
+**💵 Ultra-Low Cost on Mantle Network**
+- Escrow creation: ~$0.10 (vs $10-20 on Ethereum L1)
+- 99% cost reduction compared to Ethereum Layer 1
+- 0.1-0.5% platform costs vs 2-5% traditional factoring fees
 - Gas fees: ~0.02 gwei on Mantle vs 20-50 gwei on Ethereum
 
-**⚖️ Transparent Trust Model**
-- Oracle address publicly viewable and verifiable
-- All fraud decisions logged on-chain with reasons
-- Users choose which oracle-enabled contracts to trust
-- No black-box algorithms or arbitrary account freezes
+**📈 Real-World Asset Benefits**
+- Any invoice size (no $100k minimums)
+- Instant settlement (seconds vs weeks)
+- Transparent on-chain trading
+- OpenSea compatible NFTs
 
-## How It Works
+## How Invoice Factoring Works
 
-SecuredTransfer uses a **oracle pattern** where the payment escrow contract (SecuredTransferContract) consults an external fraud detection oracle (ex: SimpleFraudOracle) through a standardized interface (IFraudOracle). This architectural separation enables:
+**Traditional Flow (30-day wait):**
+Seller delivers → Buyer pays in 30 days → Seller waits for payment
 
-1. **Immutable Payment Logic** - Core escrow contract never needs updates
-2. **Evolving Fraud Detection** - Oracle can be upgraded as new threats emerge
-3. **Specialized Expertise** - Fraud detection maintained by security specialists
-4. **User Choice** - Different oracles for different risk tolerances
-5. **Cost Efficiency** - Single oracle call replaces expensive off-chain verification
+**With SecuredTransfer:**
+1. Buyer creates escrow with USDT → Invoice NFT auto-minted to seller
+2. Seller lists invoice on marketplace at discount (e.g., $950 for $1000 invoice)
+3. Factoring buyer purchases invoice → Seller receives $950 immediately  
+4. Original buyer releases escrow → Factoring buyer receives $1000
+5. **Everyone wins**: Seller gets instant liquidity, factoring buyer earns 5% ROI
 
-The oracle evaluates transactions against blacklists, amount limits, behavioral patterns, and manual flags—returning a simple pass/fail decision. Flagged transactions are automatically refunded, protecting buyers without manual dispute resolution.
+**Key Components:**
+- **SecuredTransferContract** - USDT escrow with compliance checks
+- **InvoiceNFT** - ERC-721 tokens representing invoices
+- **ComplianceOracle** - KYC/AML verification and risk scoring
+- **Marketplace** - Trade invoices with transparent pricing
 
 ## System Architecture & User Flow
 
@@ -80,7 +86,7 @@ The oracle evaluates transactions against blacklists, amount limits, behavioral 
 │                   ETHEREUM BLOCKCHAIN (Sepolia/Mainnet)             │
 │                                                                     │
 │  ┌──────────────────┐         ┌────────────────────────────────-─┐  │
-│  │  PYUSD TOKEN     │────────▶│    SECUREDTRANSFERCONTRACT.SOL   |  │
+│  │  USDT TOKEN      │────────▶│    SECUREDTRANSFERCONTRACT.SOL   |  │
 │  │  (ERC-20)        │ approve │                                  │  │
 │  │                  │ transfer│  • deposit() - Create Escrow     │  │
 │  └──────────────────┘         │  • release() - Complete Payment  │  │
@@ -130,23 +136,22 @@ KEY ARCHITECTURAL PIECES
 
 ## Features
 
-* **PYUSD Escrow** – Secure smart contract holds buyer funds until completion
-* **Automated Fraud Detection** – Real-time checks with automatic refunds for flagged transactions
+* **USDT Escrow** – Secure smart contract holds buyer funds until completion
 * **Invoice Tokenization (RWA)** – ERC-721 NFTs representing invoices for trading and factoring
 * **Invoice Marketplace** – Buy and sell tokenized invoices at discounted prices
 * **Invoice Factoring** – Instant liquidity by selling invoices before payment due date
-* **Buyer Protection** – Release funds or request refunds with transparent on-chain status
-* **Blockscout SDK Integration** – Real-time transaction monitoring and explorer integration
+* **Compliance & KYC/AML** – 4-level verification system with transaction limits ($1k to $1M)
+* **Automated Fraud Detection** – Real-time checks with automatic buyer refunds
 * **Multi-Wallet Support** – Dynamic wallet connection (MetaMask, Coinbase, WalletConnect, etc.)
-* **Complete Audit Trail** – All actions emit on-chain events viewable on explorers
+* **Complete Audit Trail** – All actions emit on-chain events viewable on Mantle Explorer
 
 ---
 
 ## Tech Stack
 
-**Frontend:** Next.js 14, Ant Design, Viem, Dynamic Wallet SDK, Mantle Explorer Integration
+**Frontend:** Next.js 14, Ant Design, Viem, Dynamic Wallet SDK
 
-**Smart Contracts:** Solidity ^0.8.28, Hardhat, OpenZeppelin, Hardhat Ignition
+**Smart Contracts:** Solidity ^0.8.28, Hardhat, OpenZeppelin, ERC-721, ERC-20
 
 **Blockchain:** Mantle Network (L2)
 - **Mantle Mainnet** (Chain ID: 5000)
@@ -156,42 +161,13 @@ KEY ARCHITECTURAL PIECES
 - Mainnet: `0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE`
 - Alternative: USDC `0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9`
 
-## Technology Partners
-
-SecuredTransfer is built around three key partner technologies: PYUSD, Hardhat, and Blockscout.
-
-**PYUSD** – PayPal's regulated stablecoin serves as the payment rail for all SecuredTransfer escrow transactions. Because it's fully ERC-20 compatible and backed by real-world reserves, it provides the reliability and consumer confidence needed for escrow-based payments.
-
-**PYUSD Integration in SecuredTransfer:**
-- **Escrow Currency** – All SecuredTransferContract deposits, releases, and refunds use PYUSD via ERC-20 transferFrom/transfer functions with 6 decimal precision
-- **Fraud Detection Amounts** – SimpleFraudOracle validates transaction amounts in PYUSD units (default 5000 PYUSD max) to prevent suspicious large transfers
-- **Automatic Network Selection** – SecuredTransfer automatically uses Sepolia PYUSD (0xCaC...bB9) for testnet and Mainnet PYUSD (0x6c3...0e8) based on deployment
-
-**Hardhat** – Used for contract development, deployment, and verification. Hardhat's comprehensive tooling environment made it possible to build a production-ready escrow system with separate oracle architecture.
-
-**Hardhat Integration in SecuredTransfer:**
-- **Oracle-Linked Deployment** – Hardhat Ignition's SecuredTransferWithOracle module automatically deploys SimpleFraudOracle then passes its address to SecuredTransferContract's constructor
-- **Fraud Scenario Testing** – Test suite validates blacklist checks, amount limits, same-address detection, and escrow state transitions using Hardhat's testing framework
-- **Production Deployment** – `yarn deploy:with-oracle` script uses Hardhat to deploy both contracts to Sepolia/Mainnet and outputs addresses for frontend .env configuration
-
-**Blockscout** – Integrated as both a transparency layer and developer tool using the official Blockscout SDK (@blockscout/app-sdk). Every SecuredTransfer action (deposit, fraud attestation, refund, release) emits an event visible through Blockscout's explorer and SDK, making the entire fraud arbitration process publicly auditable.
-
-**Blockscout SDK Integration in SecuredTransfer:**
-- **Transaction Monitoring** – useBlockscout hook wraps SDK to show toast notifications for every deposit/release/refund/markFraud transaction with real-time pending→success status updates
-- **Contract Transparency** – My Escrows page and Escrow Details page include dedicated buttons that open Blockscout popups showing SecuredTransferContract transaction history filtered by escrow events
-- **Oracle Verification** – Fraud oracle addresses are clickable links to Blockscout allowing users to verify SimpleFraudOracle contract code and flagging decisions
-
-SecuredTransfer is designed for independent deployment—each service provider deploys their own SecuredTransferContract instance with their choice of fraud oracle. The public, auditable contract code ensures transparency while the separate oracle design allows upgrading fraud detection without redeploying the payment contract.
-
-SecuredTransfer combines on-chain logic, stablecoin security, and oracle-based fraud detection to create a protection system for consumer payments.
-
 ---
 
 ## How It Works
 
 ### SecuredTransferContract Flow
 
-1. **Create Escrow** - Buyer approves PYUSD → calls `deposit()` → contract transfers funds and creates escrow → **mints Invoice NFT to seller** → oracle checks for fraud (blacklist, amount limits, same-address) → if flagged: auto-refund + revert, if clean: escrow created with ID and tradable invoice NFT
+1. **Create Escrow** - Buyer approves USDT → calls `deposit()` → contract transfers funds and creates escrow → **mints Invoice NFT to seller** → oracle checks compliance/fraud → if flagged: auto-refund + revert, if clean: escrow created with tradable invoice NFT
 
 2. **Transaction Outcomes**
    - **Normal**: Buyer or invoice NFT owner calls `release()` → funds sent to current invoice owner (enabling factoring) → invoice NFT burned
@@ -204,47 +180,41 @@ SecuredTransfer combines on-chain logic, stablecoin security, and oracle-based f
    - New invoice owner receives full amount when escrow is released
    - Enables invoice factoring and early payment liquidity
 
-3. **Oracle Controls** - Blacklist management, transaction limits, manual flagging, dispute window configuration
+3. **Compliance Oracle** - KYC/AML verification, risk scoring, transaction limits, blacklist management
 
-4. **Event Transparency** - All actions emit indexed events (`Deposited`, `Released`, `Refunded`, `FraudFlagged`) viewable on Blockscout/Etherscan
+4. **Event Transparency** - All actions emit indexed events (`Deposited`, `Released`, `Refunded`, `InvoiceMinted`) viewable on Mantle Explorer
 
-### Blockscout SDK Integration
+## Compliance Oracle Architecture
 
-The Blockscout SDK provides real-time transaction monitoring throughout SecuredTransfer:
+### ComplianceOracle Features
 
-- **Toast Notifications** - Instant status updates for all escrow operations (pending → confirmed)
-- **Transaction History Popups** - One-click access to contract, wallet, and PYUSD token activity
-- **Explorer Links** - Direct integration with Blockscout explorer for detailed transaction views
-- **Event Monitoring** - Public audit trail of all escrow events and oracle decisions
+- **KYC Verification** - 4-level system (None, Basic, Advanced, Institutional)
+- **Transaction Limits** - $1k to $1M based on KYC level
+- **AML Risk Scoring** - 0-100 score with automatic flagging above 80
+- **Blacklist Management** - Block fraudulent addresses
+- **Compliance Checks** - Automatic validation on every escrow creation
+- **Fraud Detection** - Automatic refunds for high-risk transactions
 
-## Fraud Oracle Architecture
+### Integration
 
-### IFraudOracle Interface
-
-SecuredTransfer uses a standardized `IFraudOracle` interface with two key functions: `checkEscrow()` (automatic checks during deposit) and `isEscrowFlagged()` (view flagged status). Any contract implementing this interface can serve as a fraud oracle.
-
-### SimpleFraudOracle Implementation
-
-The included `SimpleFraudOracle` performs automatic checks (blacklist verification, amount limits, same-address detection, manual flags) and provides owner controls for blacklist management, transaction limits, and manual flagging.
-
-### Integration & Deployment
-
-- One oracle per SecuredTransferContract deployment (updatable by owner via `updateFraudOracle()`)
-- Deploy options: SimpleFraudOracle (`yarn deploy:with-oracle`), custom oracle, third-party API, or multi-sig
-- Oracle failures are handled gracefully with `try/catch` - escrows proceed if oracle is unavailable
-- Oracle address and all fraud decisions are publicly auditable on-chain
+- ComplianceOracle integrated with SecuredTransferContract via `IComplianceOracle` interface
+- Oracle checks run during `deposit()` - flagged transactions automatically refunded
+- Oracle failures handled gracefully - escrows proceed if oracle unavailable
+- All compliance decisions auditable on-chain
 
 ## Why This Can Be Trusted
 
-**Open Source & Auditable** - Smart contracts are fully deployed and verifiable on Blockscout/Etherscan with complete source code.
+**Open Source & Auditable** - Smart contracts are fully deployed and verifiable on Mantle Explorer with complete source code.
 
-**Automated Protection** - Funds are only released or refunded based on on-chain logic and oracle attestations, not arbitrary admin decisions.
+**Automated Protection** - Funds are only released or refunded based on on-chain logic and compliance oracle attestations, not arbitrary admin decisions.
 
-**Transparent Events** - Every action emits an on-chain event for public verification. Oracle address and decisions are publicly viewable.
+**Transparent Events** - Every action emits an on-chain event for public verification. All compliance decisions are auditable.
 
-**Regulated Stablecoin** - PYUSD is PayPal's regulated stablecoin, ensuring real-world value and predictable settlement.
+**Stablecoin Security** - USDT (Tether) is a widely-used stablecoin with 6 decimal precision, ensuring predictable settlement.
 
-Users trust the immutable contract code, not the developer.
+**ERC-721 Standard** - Invoice NFTs are standard ERC-721 tokens, compatible with OpenSea and all NFT marketplaces.
+
+Users trust the immutable contract code and transparent on-chain operations.
 
 ---
 
