@@ -1,0 +1,40 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "npx hardhat test",
+    "build": "npx hardhat compile",
+    "deploy": "yarn deploy:sepolia",
+    "deploy:test": "npx hardhat ignition deploy ignition/modules/SecuredTransferContractTest.ts",
+    "deploy:mantle:testnet": "HARDHAT_NETWORK=mantleSepolia npx hardhat ignition deploy --network mantleSepolia ignition/modules/SecuredTransferWithOracle.ts",
+    "deploy:mantle:mainnet": "HARDHAT_NETWORK=mantleMainnet npx hardhat ignition deploy --network mantleMainnet ignition/modules/SecuredTransferWithOracle.ts",
+    "deploy:with-oracle": "HARDHAT_NETWORK=mantleSepolia npx hardhat ignition deploy --network mantleSepolia ignition/modules/SecuredTransferWithOracle.ts",
+    "verify:mantle:testnet": "npx hardhat verify --network mantleSepolia",
+    "verify:mantle:mainnet": "npx hardhat verify --network mantleMainnet",
+    "deploy:sepolia": "HARDHAT_NETWORK=sepolia npx hardhat ignition deploy --network sepolia ignition/modules/SecuredTransferContract.ts",
+    "deploy:mainnet": "HARDHAT_NETWORK=mainnet npx hardhat ignition deploy --network hardhatMainnet ignition/modules/SecuredTransferContract.ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ignition": "^3.0.3",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
+    "@types/node": "^22.18.10",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.4",
+    "hardhat": "^3.0.7",
+    "typescript": "~5.8.0",
+    "viem": "^2.38.0"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-ignition-viem": "^3.0.3",
+    "@nomicfoundation/hardhat-keystore": "^3.0.1",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.1",
+    "@nomicfoundation/hardhat-node-test-runner": "^3.0.3",
+    "@nomicfoundation/hardhat-verify": "^3.0.3",
+    "@nomicfoundation/hardhat-viem": "^3.0.0",
+    "@nomicfoundation/hardhat-viem-assertions": "^3.0.2",
+    "@openzeppelin/contracts": "^5.4.0",
+    "commander": "^12.0.0",
+    "dotenv": "^17.2.3"
+  }
+}
