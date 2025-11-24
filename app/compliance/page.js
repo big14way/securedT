@@ -35,7 +35,9 @@ import {
     getSellerEscrows, 
     getComplianceInfo,
     getAMLRiskScore,
-    isContractAvailable 
+    isContractAvailable,
+    getEscrow,
+    getStatusText
 } from '../util/securedTransferContract';
 
 const { Title, Paragraph, Text } = Typography;
