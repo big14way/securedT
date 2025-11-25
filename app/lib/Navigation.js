@@ -11,7 +11,8 @@ import {
     SafetyOutlined,
     DashboardOutlined,
     CheckCircleOutlined,
-    ShoppingOutlined
+    ShoppingOutlined,
+    LineChartOutlined
 } from '@ant-design/icons';
 import Logo from './Logo';
 import { useBlockscout } from '../hooks/useBlockscout';
@@ -76,6 +77,12 @@ export default function Navigation() {
             label: 'Invoice Marketplace',
             icon: <ShoppingOutlined />,
             path: '/marketplace'
+        },
+        walletAddress && {
+            key: 'yield',
+            label: 'Yield Dashboard',
+            icon: <LineChartOutlined />,
+            path: '/yield'
         },
         walletAddress && {
             key: 'kyc',

@@ -12,7 +12,10 @@ import {
     EyeOutlined,
     ExclamationCircleOutlined,
     HistoryOutlined,
-    LinkOutlined
+    LinkOutlined,
+    RiseOutlined,
+    ThunderboltOutlined,
+    ClockCircleOutlined
 } from '@ant-design/icons';
 import { useRouter, useParams } from 'next/navigation';
 import { 
@@ -505,6 +508,59 @@ export default function EscrowDetailsPage() {
                             <Descriptions.Item label="Description">
                                 <Text>{escrowData.description}</Text>
                             </Descriptions.Item>
+                            
+                            {/* Yield Generation Info */}
+                            {escrowData.yieldEnabled && (
+                                <>
+                                    <Descriptions.Item label="Yield Generation">
+                                        <Space direction="vertical" size="small">
+                                            <Tag color="purple" icon={<ThunderboltOutlined />}>
+                                                mETH Staking Active
+                                            </Tag>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                Earning ~7.2% APY via Mantle's mETH Protocol
+                                            </Text>
+                                        </Space>
+                                    </Descriptions.Item>
+                                    
+                                    <Descriptions.Item label="Accrued Yield">
+                                        <Space direction="vertical" size={4}>
+                                            <Text strong style={{ color: '#52c41a', fontSize: 16 }}>
+                                                <RiseOutlined /> ${escrowData.estimatedYield || '0.00'}
+                                            </Text>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                Estimated since deposit
+                                            </Text>
+                                        </Space>
+                                    </Descriptions.Item>
+                                    
+                                    <Descriptions.Item label="Yield Split">
+                                        <Space direction="vertical" size={2} style={{ width: '100%' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Text>Buyer (80%):</Text>
+                                                <Text strong>${((escrowData.estimatedYield || 0) * 0.80).toFixed(2)}</Text>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Text>Seller (15%):</Text>
+                                                <Text strong>${((escrowData.estimatedYield || 0) * 0.15).toFixed(2)}</Text>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Text>Platform (5%):</Text>
+                                                <Text strong>${((escrowData.estimatedYield || 0) * 0.05).toFixed(2)}</Text>
+                                            </div>
+                                        </Space>
+                                    </Descriptions.Item>
+                                    
+                                    {escrowData.unstakeRequested && (
+                                        <Descriptions.Item label="Unstaking Status">
+                                            <Tag color="warning" icon={<ClockCircleOutlined />}>
+                                                Unstaking In Progress - Wait 12 hours
+                                            </Tag>
+                                        </Descriptions.Item>
+                                    )}
+                                </>
+                            )}
+                            
                             <Descriptions.Item label="Created">
                                 <Text>{new Date(escrowData.createdAt).toLocaleString()}</Text>
                             </Descriptions.Item>

@@ -137,6 +137,7 @@ KEY ARCHITECTURAL PIECES
 ## Features
 
 * **USDT Escrow** – Secure smart contract holds buyer funds until completion
+* **cmETH Yield Generation (NEW!)** – Optional 7.2% APY on escrowed funds via Mantle's cmETH on L2
 * **Invoice Tokenization (RWA)** – ERC-721 NFTs representing invoices for trading and factoring
 * **Invoice Marketplace** – Buy and sell tokenized invoices at discounted prices
 * **Invoice Factoring** – Instant liquidity by selling invoices before payment due date
@@ -162,6 +163,76 @@ KEY ARCHITECTURAL PIECES
 **Stablecoin:** USDT on Mantle
 - Mainnet: `0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE`
 - Alternative: USDC `0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9`
+
+**DeFi Integration:**
+- **cmETH (Composable mETH)** - Mantle's liquid staking token on L2 (~7.2% APY)
+- **Agni Finance** - DEX for USDT ↔ cmETH swaps (via WMNT)
+
+---
+
+## cmETH Yield Generation (DeFi Track)
+
+SecuredTransfer now integrates **Mantle's cmETH (Composable mETH)** for optional yield generation on escrowed funds - all on Layer 2!
+
+### How It Works
+
+1. **Enable Yield** - When creating an escrow, toggle "Enable Yield Generation"
+2. **Automatic Swap** - Your USDT is swapped to cmETH via Agni Finance DEX
+3. **Earn 7.2% APY** - cmETH accumulates value from Ethereum staking + restaking rewards
+4. **Yield Distribution** - When released, yield is split:
+   - **80% to Buyer** - You paid, you earn most
+   - **15% to Seller** - Bonus for accepting yield escrow
+   - **5% to Platform** - Covers gas and maintenance
+
+### Example: $10,000 Escrow for 30 Days
+
+```
+Initial Deposit: $10,000 USDT
+→ Swapped to cmETH via Agni Finance (USDT → WMNT → cmETH)
+→ Held in cmETH (accrues value automatically)
+→ Earns 7.2% APY (staking + restaking rewards)
+
+After 30 days:
+Total Value: $10,059.18
+Yield: $59.18
+
+Distribution:
+- Buyer receives: $47.34 (80%)
+- Seller receives: $10,008.88 ($10k + 15%)
+- Platform: $2.96 (5%)
+```
+
+### Key Features
+
+- ✅ **Instant Swaps** - No staking delays, swap USDT → cmETH immediately
+- ⚡ **Instant Withdrawals** - No unstaking period! Swap cmETH → USDT anytime
+- 🔒 **cmETH Security** - Backed by mETH (Ethereum 2.0 validators) + restaking rewards
+- 📊 **Real-Time Tracking** - View accrued yield in dashboard
+- 🎯 **Opt-In** - Traditional escrow still available without yield
+- 🌉 **No Bridge Required** - Everything happens on Mantle L2
+
+### Important Notes
+
+**No Unstaking Delay:**  
+Unlike L1 mETH which requires 12-40 hour unstaking, cmETH can be swapped back to USDT instantly via Agni Finance. Perfect for escrow use cases!
+
+**Swap Path:**
+- **Deposit:** USDT → WMNT → cmETH (3-hop swap via Agni Finance)
+- **Withdrawal:** cmETH → WMNT → USDT (reverse swap)
+- **Slippage:** 1% tolerance for price protection
+
+**Exchange Rate:**  
+cmETH is value-accumulating (same as mETH). 1 cmETH ≠ 1 ETH, but appreciates over time as staking + restaking rewards accrue.
+
+**Risk Disclosure:**  
+cmETH carries the same risks as mETH (Ethereum staking + Aave) plus additional Agni Finance DEX risks. Only enable yield if comfortable with DeFi protocols.
+
+### Resources
+
+- **cmETH Address**: `0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA`
+- **Agni Finance**: https://agni.finance/
+- **mETH Documentation**: https://docs.mantle.xyz/meth
+- **APY Stats**: https://www.methprotocol.xyz/
 
 ---
 

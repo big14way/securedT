@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Form, Input, InputNumber, Typography, Space, Alert, Steps, message, Tag } from 'antd';
-import { LockOutlined, UserOutlined, DollarOutlined, ThunderboltOutlined, SafetyOutlined, WarningOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, InputNumber, Typography, Space, Alert, Steps, message, Tag, Switch, Tooltip, Statistic } from 'antd';
+import { LockOutlined, UserOutlined, DollarOutlined, ThunderboltOutlined, SafetyOutlined, WarningOutlined, RiseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { createEscrow, isContractAvailable, isFraudOracleConfigured, getComplianceInfo } from '../util/securedTransferContract';
@@ -38,6 +38,8 @@ export default function DepositPage() {
     const [kycLevel, setKycLevel] = useState(0);
     const [kycLimit, setKycLimit] = useState(1000);
     const [loadingKyc, setLoadingKyc] = useState(true);
+    const [yieldEnabled, setYieldEnabled] = useState(false);
+    const [estimatedYield, setEstimatedYield] = useState(null);
 
     // Load KYC status
     useEffect(() => {
@@ -329,6 +331,38 @@ export default function DepositPage() {
         message.success('Demo data loaded! You can now create a test escrow.');
     };
 
+    // Calculate estimated yield for 30 days at 7.2% APY
+    const calculateYield = (amount) => {
+        if (!amount || amount <= 0) {
+            setEstimatedYield(null);
+            return;
+        }
+
+        const APY = 0.072; // 7.2%
+        const days = 30;
+        const yearlyYield = amount * APY;
+        const dailyYield = yearlyYield / 365;
+        const totalYield = dailyYield * days;
+
+        // Split yield: 80% buyer, 15% seller, 5% platform
+        setEstimatedYield({
+            total: totalYield.toFixed(2),
+            buyer: (totalYield * 0.80).toFixed(2),
+            seller: (totalYield * 0.15).toFixed(2),
+            platform: (totalYield * 0.05).toFixed(2)
+        });
+    };
+
+    // Update yield calculation when amount changes
+    useEffect(() => {
+        if (yieldEnabled) {
+            const amount = form.getFieldValue('amount');
+            if (amount) {
+                calculateYield(amount);
+            }
+        }
+    }, [form, yieldEnabled]);
+
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 24px' }}>
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
@@ -491,6 +525,121 @@ export default function DepositPage() {
                         />
                     </Form.Item>
 
+                    {/* mETH Yield Generation Toggle */}
+                    <Card 
+                        style={{ 
+                            marginBottom: 24, 
+                            background: yieldEnabled ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8fafc',
+                            border: yieldEnabled ? 'none' : '1px solid #e8e8e8'
+                        }}
+                    >
+                        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                            <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+                                <Space>
+                                    <RiseOutlined style={{ fontSize: 20, color: yieldEnabled ? 'white' : '#667eea' }} />
+                                    <Text strong style={{ fontSize: 16, color: yieldEnabled ? 'white' : 'inherit' }}>
+                                        Enable Yield Generation
+                                    </Text>
+                                    <Tooltip title="Stake your escrowed USDT in Mantle's mETH Protocol to earn 7.2% APY while maintaining payment security">
+                                        <InfoCircleOutlined style={{ color: yieldEnabled ? 'rgba(255,255,255,0.8)' : '#8c8c8c' }} />
+                                    </Tooltip>
+                                </Space>
+                                <Switch 
+                                    checked={yieldEnabled}
+                                    onChange={(checked) => {
+                                        setYieldEnabled(checked);
+                                        if (checked) {
+                                            const amount = form.getFieldValue('amount');
+                                            if (amount) {
+                                                calculateYield(amount);
+                                            }
+                                        }
+                                    }}
+                                    checkedChildren="ON"
+                                    unCheckedChildren="OFF"
+                                />
+                            </Space>
+
+                            {yieldEnabled && (
+                                <>
+                                    <Alert
+                                        message={
+                                            <Space>
+                                                <ThunderboltOutlined />
+                                                <Text strong style={{ color: 'inherit' }}>mETH Protocol Integration Active</Text>
+                                            </Space>
+                                        }
+                                        description={
+                                            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                                                <Text style={{ color: 'inherit' }}>
+                                                    Your USDT will be converted to ETH and staked in Mantle's mETH Protocol earning ~7.2% APY
+                                                </Text>
+                                                <Space split="|">
+                                                    <Text style={{ color: 'inherit' }}>
+                                                        <strong>Buyer:</strong> 80% yield
+                                                    </Text>
+                                                    <Text style={{ color: 'inherit' }}>
+                                                        <strong>Seller:</strong> 15% yield
+                                                    </Text>
+                                                    <Text style={{ color: 'inherit' }}>
+                                                        <strong>Platform:</strong> 5%
+                                                    </Text>
+                                                </Space>
+                                            </Space>
+                                        }
+                                        type="info"
+                                        showIcon={false}
+                                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}
+                                    />
+
+                                    {estimatedYield && (
+                                        <Card type="inner" style={{ background: 'rgba(255,255,255,0.15)', border: 'none' }}>
+                                            <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                                                <Text style={{ color: 'white', fontSize: 12 }}>Estimated Earnings (30 days):</Text>
+                                                <Space size={24} wrap>
+                                                    <Statistic
+                                                        title={<span style={{ color: 'rgba(255,255,255,0.8)' }}>Total Yield</span>}
+                                                        value={estimatedYield.total}
+                                                        prefix="$"
+                                                        precision={2}
+                                                        valueStyle={{ color: 'white', fontSize: 18 }}
+                                                    />
+                                                    <Statistic
+                                                        title={<span style={{ color: 'rgba(255,255,255,0.8)' }}>Your Share (80%)</span>}
+                                                        value={estimatedYield.buyer}
+                                                        prefix="$"
+                                                        precision={2}
+                                                        valueStyle={{ color: '#52c41a', fontSize: 18 }}
+                                                    />
+                                                    <Statistic
+                                                        title={<span style={{ color: 'rgba(255,255,255,0.8)' }}>Seller Share (15%)</span>}
+                                                        value={estimatedYield.seller}
+                                                        prefix="$"
+                                                        precision={2}
+                                                        valueStyle={{ color: '#faad14', fontSize: 18 }}
+                                                    />
+                                                </Space>
+                                            </Space>
+                                        </Card>
+                                    )}
+
+                                    <Alert
+                                        message={
+                                            <Space>
+                                                <WarningOutlined />
+                                                <Text strong>Important: Unstaking Delay</Text>
+                                            </Space>
+                                        }
+                                        description="Releasing or refunding a yield-enabled escrow requires a minimum 12-hour unstaking period (up to 40+ days). Additional gas costs apply for USDT→ETH→mETH conversion."
+                                        type="warning"
+                                        showIcon={false}
+                                        style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: 'white' }}
+                                    />
+                                </>
+                            )}
+                        </Space>
+                    </Card>
+
                     <div style={{ 
                         background: '#f8fafc', 
                         padding: '16px', 
@@ -499,7 +648,8 @@ export default function DepositPage() {
                     }}>
                         <Title level={5}>How it works:</Title>
                         <ul style={{ color: '#666', margin: 0 }}>
-                            <li>Your PYUSD will be held securely in a smart contract escrow</li>
+                            <li>Your USDT will be held securely in a smart contract escrow</li>
+                            {yieldEnabled && <li style={{ color: '#667eea', fontWeight: 500 }}>Your funds will be staked in mETH to earn 7.2% APY during escrow</li>}
                             <li>Fraud oracles monitor the transaction for any suspicious activity</li>
                             <li>Funds are released to seller only when transaction is verified safe</li>
                             <li>Automatic refund if fraud is detected by oracle attestation</li>

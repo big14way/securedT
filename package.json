@@ -35,7 +35,9 @@
     "wagmi": "^2.16.3"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
     "@types/react": "18.2.21",
+    "chai": "^6.2.1",
     "prettier": "3.6.2",
     "typescript": "5.2.2"
   }
