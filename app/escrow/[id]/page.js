@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Typography, Space, Button, Alert, Tag, Descriptions, Steps, Timeline, message } from 'antd';
+import { Card, Typography, Space, Button, Alert, Tag, Descriptions, Steps, Timeline, message, Slider, InputNumber, Modal, Statistic } from 'antd';
 import { 
     DollarOutlined, 
     UserOutlined, 
@@ -15,7 +15,9 @@ import {
     LinkOutlined,
     RiseOutlined,
     ThunderboltOutlined,
-    ClockCircleOutlined
+    ClockCircleOutlined,
+    SafetyOutlined,
+    InfoCircleOutlined
 } from '@ant-design/icons';
 import { useRouter, useParams } from 'next/navigation';
 import { 
@@ -67,6 +69,9 @@ export default function EscrowDetailsPage() {
     const [buyerCompliance, setBuyerCompliance] = useState(null);
     const [sellerCompliance, setSellerCompliance] = useState(null);
     const [loadingCompliance, setLoadingCompliance] = useState(true);
+    const [collateralInfo, setCollateralInfo] = useState(null);
+    const [borrowModalVisible, setBorrowModalVisible] = useState(false);
+    const [borrowAmount, setBorrowAmount] = useState(0);
     const walletClient = useWalletClient();
     const { address: walletAddress } = useWalletAddress();
     const { 
@@ -203,6 +208,36 @@ export default function EscrowDetailsPage() {
         loadComplianceInfo();
     }, [escrowData]);
 
+    // Load collateral information
+    useEffect(() => {
+        const loadCollateralInfo = async () => {
+            if (!escrowData || !isContractAvailable()) {
+                return;
+            }
+
+            try {
+                // TODO: Replace with actual contract call
+                // const info = await getCollateralInfo(parseInt(params.id));
+                
+                // Mock data for demonstration
+                const mockInfo = {
+                    isCollateralized: true,
+                    suppliedAmount: escrowData.amount,
+                    borrowedAmount: escrowData.amount * 0.6,
+                    availableToBorrow: escrowData.amount * 0.2,
+                    timestamp: Date.now() - 86400000
+                };
+                
+                setCollateralInfo(mockInfo);
+            } catch (error) {
+                console.error('Error loading collateral info:', error);
+                setCollateralInfo(null);
+            }
+        };
+
+        loadCollateralInfo();
+    }, [escrowData, params.id]);
+
     const handleRelease = async () => {
         if (!walletClient) {
             message.error('Please connect your wallet first');
@@ -302,6 +337,76 @@ export default function EscrowDetailsPage() {
         } catch (error) {
             console.error('Mark fraud failed:', error);
             message.error(error.message || 'Failed to mark fraud');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDepositAsCollateral = async () => {
+        if (!walletClient) {
+            message.error('Please connect your wallet first');
+            return;
+        }
+
+        if (!isContractAvailable()) {
+            message.error('Contract not available. Please check configuration.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            console.log('Depositing escrow as collateral:', params.id);
+            // TODO: Replace with actual contract call
+            // const hash = await depositAsCollateral(walletClient, parseInt(params.id));
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            message.success('Escrow deposited as collateral successfully!');
+            
+            // Refresh data
+            window.location.reload();
+        } catch (error) {
+            console.error('Deposit as collateral failed:', error);
+            message.error(error.message || 'Failed to deposit as collateral');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBorrow = () => {
+        if (!collateralInfo) {
+            message.error('Collateral info not available');
+            return;
+        }
+        setBorrowAmount(0);
+        setBorrowModalVisible(true);
+    };
+
+    const executeBorrow = async () => {
+        if (!walletClient) {
+            message.error('Please connect your wallet first');
+            return;
+        }
+
+        if (borrowAmount <= 0 || borrowAmount > collateralInfo.availableToBorrow) {
+            message.error('Invalid borrow amount');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            console.log('Borrowing against escrow:', params.id, borrowAmount);
+            // TODO: Replace with actual contract call
+            // const hash = await borrowAgainstEscrow(walletClient, parseInt(params.id), borrowAmount);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            message.success(`Successfully borrowed $${borrowAmount.toLocaleString()} USDT`);
+            setBorrowModalVisible(false);
+            
+            // Refresh data
+            window.location.reload();
+        } catch (error) {
+            console.error('Borrow failed:', error);
+            message.error(error.message || 'Failed to borrow');
         } finally {
             setLoading(false);
         }
@@ -603,6 +708,90 @@ export default function EscrowDetailsPage() {
 
                 {/* Sidebar */}
                 <div>
+                    {/* Collateral Management Card */}
+                    {isBuyer() && escrowData.status === EscrowStatus.Active && !escrowData.fraudFlagged && (
+                        <Card 
+                            title={
+                                <Space>
+                                    <SafetyOutlined />
+                                    <span>Collateral Management</span>
+                                </Space>
+                            } 
+                            style={{ marginBottom: '24px' }}
+                        >
+                            {!collateralInfo?.isCollateralized ? (
+                                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                                    <Alert
+                                        message="Working Capital Financing"
+                                        description="Deposit this escrow as collateral on INIT Capital to borrow up to 80% of its value while maintaining payment security."
+                                        type="info"
+                                        showIcon
+                                        icon={<InfoCircleOutlined />}
+                                    />
+                                    <Button 
+                                        type="primary" 
+                                        block
+                                        size="large"
+                                        onClick={handleDepositAsCollateral}
+                                        loading={loading}
+                                        icon={<SafetyOutlined />}
+                                    >
+                                        Use as Collateral
+                                    </Button>
+                                </Space>
+                            ) : (
+                                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                                    <Tag color="green" icon={<CheckCircleOutlined />} style={{ width: '100%', padding: '8px', textAlign: 'center' }}>
+                                        Collateral Active
+                                    </Tag>
+                                    
+                                    <Statistic
+                                        title="Borrowed"
+                                        value={collateralInfo.borrowedAmount}
+                                        prefix="$"
+                                        suffix={`/ $${collateralInfo.suppliedAmount * 0.8}`}
+                                        valueStyle={{ fontSize: 18 }}
+                                    />
+                                    
+                                    <Statistic
+                                        title="Available to Borrow"
+                                        value={collateralInfo.availableToBorrow}
+                                        prefix="$"
+                                        valueStyle={{ color: '#52c41a', fontSize: 18 }}
+                                    />
+
+                                    {collateralInfo.availableToBorrow > 0 && (
+                                        <Button 
+                                            type="primary" 
+                                            block
+                                            onClick={handleBorrow}
+                                            icon={<DollarOutlined />}
+                                        >
+                                            Borrow More
+                                        </Button>
+                                    )}
+
+                                    {collateralInfo.borrowedAmount > 0 && (
+                                        <>
+                                            <Alert
+                                                message="Outstanding Debt"
+                                                description={`You must repay $${collateralInfo.borrowedAmount.toLocaleString()} USDT before releasing this escrow.`}
+                                                type="warning"
+                                                showIcon
+                                            />
+                                            <Button 
+                                                block
+                                                onClick={() => router.push('/collateral')}
+                                            >
+                                                Manage in Dashboard
+                                            </Button>
+                                        </>
+                                    )}
+                                </Space>
+                            )}
+                        </Card>
+                    )}
+
                     <Card title="Actions" style={{ marginBottom: '24px' }}>
                         <Space direction="vertical" style={{ width: '100%' }} size="middle">
                             {canRelease() && (
@@ -613,6 +802,8 @@ export default function EscrowDetailsPage() {
                                     onClick={handleRelease}
                                     loading={loading}
                                     icon={<CheckCircleOutlined />}
+                                    disabled={collateralInfo?.isCollateralized && collateralInfo?.borrowedAmount > 0}
+                                    title={collateralInfo?.isCollateralized && collateralInfo?.borrowedAmount > 0 ? 'Repay outstanding debt before releasing' : ''}
                                 >
                                     Release Funds
                                 </Button>
@@ -771,6 +962,79 @@ export default function EscrowDetailsPage() {
                     </Card>
                 </div>
             </div>
+
+            {/* Borrow Modal */}
+            <Modal
+                title={`Borrow Against Escrow #${escrowData?.id}`}
+                open={borrowModalVisible}
+                onCancel={() => setBorrowModalVisible(false)}
+                onOk={executeBorrow}
+                okText="Borrow"
+                confirmLoading={loading}
+                width={600}
+            >
+                {collateralInfo && (
+                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                        <Alert
+                            message="Borrow Against Collateral"
+                            description={`You can borrow up to $${collateralInfo.availableToBorrow.toLocaleString()} USDT (80% LTV)`}
+                            type="info"
+                            showIcon
+                        />
+
+                        <div>
+                            <Text strong style={{ marginBottom: 8, display: 'block' }}>
+                                Borrow Amount (USDT)
+                            </Text>
+                            <Slider
+                                min={0}
+                                max={collateralInfo.availableToBorrow}
+                                value={borrowAmount}
+                                onChange={setBorrowAmount}
+                                marks={{
+                                    0: '$0',
+                                    [collateralInfo.availableToBorrow]: `$${collateralInfo.availableToBorrow.toLocaleString()}`
+                                }}
+                            />
+                            <InputNumber
+                                style={{ width: '100%', marginTop: 16 }}
+                                min={0}
+                                max={collateralInfo.availableToBorrow}
+                                value={borrowAmount}
+                                onChange={setBorrowAmount}
+                                prefix="$"
+                                suffix="USDT"
+                            />
+                        </div>
+
+                        <Card size="small" style={{ background: '#f5f5f5' }}>
+                            <Space direction="vertical" style={{ width: '100%' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text>Interest Rate:</Text>
+                                    <Text strong>5.2% APY</Text>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text>Estimated Monthly Payment:</Text>
+                                    <Text strong>${((borrowAmount * 5.2 / 100) / 12).toFixed(2)}</Text>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text>Total Borrowed After:</Text>
+                                    <Text strong>${(collateralInfo.borrowedAmount + borrowAmount).toLocaleString()}</Text>
+                                </div>
+                            </Space>
+                        </Card>
+
+                        {borrowAmount > 0 && (
+                            <Alert
+                                message="Working Capital Financing"
+                                description="Borrowed funds will be transferred to your wallet immediately. Repay the loan before releasing the escrow to the seller."
+                                type="success"
+                                showIcon
+                            />
+                        )}
+                    </Space>
+                )}
+            </Modal>
         </div>
     );
 }

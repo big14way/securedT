@@ -1,0 +1,24 @@
+{
+  "network": "sepolia",
+  "chainId": 5003,
+  "timestamp": "2025-11-25T21:57:13.070Z",
+  "deployer": "0x3C343AD077983371b29fee386bdBC8a92E934C51",
+  "contracts": {
+    "mockINITCapital": {
+      "address": "0xb069ca22fb60c76c14a186c70655a42437162c7c",
+      "deployHash": "0x2237b93aac9cbb82180d2581570b2d51df194c6dea99c17c934012714c1da0a6",
+      "explorerUrl": "https://explorer.sepolia.mantle.xyz//address/0xb069ca22fb60c76c14a186c70655a42437162c7c"
+    },
+    "collateralEscrow": {
+      "address": "0xc8fcb1d31202f2b75cea0ca70d8e00b96c24e296",
+      "deployHash": "0x29507a17492b64381e11acecc4d1d3e1ad5f8363027b9ca7b37dc8258addf105",
+      "explorerUrl": "https://explorer.sepolia.mantle.xyz//address/0xc8fcb1d31202f2b75cea0ca70d8e00b96c24e296"
+    }
+  },
+  "configuration": {
+    "usdtToken": "0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE",
+    "fraudOracle": "0x3C343AD077983371b29fee386bdBC8a92E934C51",
+    "initCapital": "0xb069ca22fb60c76c14a186c70655a42437162c7c",
+    "maxLtv": "8000 (80%)"
+  }
+}

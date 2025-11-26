@@ -1,0 +1,15 @@
+{
+  "network": "Mantle Sepolia Testnet",
+  "chainId": 5003,
+  "yieldEscrow": "0xdbbe162c7adeec7bb4fe2745b42fcc8b2aba5933",
+  "usdt": "0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE",
+  "cmETH": "0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA",
+  "cmETHProtocol": "0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA",
+  "agniRouter": "0x319b69888b0d11cec22caa5034e25fffbdc88421",
+  "wmnt": "0x78c1b0C915c4FAA5FffA6CAbf0219DA63d7f4cb8",
+  "platformWallet": "0x3C343AD077983371b29fee386bdBC8a92E934C51",
+  "deployer": "0x3C343AD077983371b29fee386bdBC8a92E934C51",
+  "timestamp": "2025-11-26T09:11:13.794Z",
+  "transactionHash": "0x5b445266c88cd71f0f39e568fea3c9fe9dcf3c47f355f24aed3f38b35e879f70",
+  "blockNumber": "31301800"
+}
