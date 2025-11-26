@@ -50,7 +50,7 @@ function UiLayoutWrapper({ children }) {
 					       <Footer style={{ textAlign: 'center' }}>
 						       <hr />
 						       <br />
-						       {APP_NAME}. {ACTIVE_CHAIN.name} network. Built for EthOnline2025. <a href="/about">About</a>
+						       {APP_NAME}. {ACTIVE_CHAIN.name} network. <a href="/about">About</a>
 					       </Footer>
 				       )}
 			       </Layout>

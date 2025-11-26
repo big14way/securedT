@@ -52,14 +52,14 @@ export const getStatusText = (status) => {
 };
 
 // Create a new escrow deposit
-export const createEscrow = async (walletClient, seller, amount, description) => {
+export const createEscrow = async (walletClient, seller, amount, description, onProgress) => {
     try {
         if (!isContractAvailable()) {
             throw new Error('Contract not available - running in demo mode');
         }
 
         const contractAddress = getContractAddress();
-        const amountInWei = parseUnits(amount.toString(), 6); // PYUSD has 6 decimals
+        const amountInWei = parseUnits(amount.toString(), 6); // USDT has 6 decimals
 
         console.log('Creating escrow:', {
             seller,
@@ -69,16 +69,31 @@ export const createEscrow = async (walletClient, seller, amount, description) =>
             contractAddress
         });
 
-        // First, approve PYUSD spending
-        await approveToken(walletClient, amountInWei);
+        // Step 1: Approve USDT spending
+        if (onProgress) onProgress('Approving USDT...');
+        const approvalHash = await approveToken(walletClient, amountInWei);
+        console.log('Token approval hash:', approvalHash);
 
-        // Then create the escrow
+        // Wait for approval confirmation
+        if (onProgress) onProgress('Waiting for approval confirmation...');
+        await publicClient.waitForTransactionReceipt({ hash: approvalHash });
+        console.log('Approval confirmed');
+
+        // Step 2: Create the escrow
+        if (onProgress) onProgress('Creating escrow...');
         const hash = await walletClient.writeContract({
             address: contractAddress,
             abi: SECUREDTRANSFER_CONTRACT.abi,
             functionName: 'deposit',
             args: [seller, amountInWei, description]
         });
+
+        console.log('Transaction hash:', hash);
+
+        // Wait for escrow creation confirmation
+        if (onProgress) onProgress('Waiting for transaction confirmation...');
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        console.log('Escrow created successfully. Receipt:', receipt);
 
         return hash;
     } catch (error) {
@@ -88,7 +103,7 @@ export const createEscrow = async (walletClient, seller, amount, description) =>
     }
 };
 
-// Approve PYUSD token spending
+// Approve USDT token spending
 export const approveToken = async (walletClient, amount) => {
     try {
         if (!isContractAvailable()) {
@@ -118,7 +133,6 @@ export const approveToken = async (walletClient, amount) => {
             args: [contractAddress, amount]
         });
 
-        console.log('Token approval hash:', hash);
         return hash;
     } catch (error) {
         console.error('Error approving token:', error);
@@ -225,7 +239,7 @@ export const getEscrow = async (escrowId) => {
                 {
                     type: 'Deposited',
                     timestamp: formatDate(new Date(Number(escrow.createdAt) * 1000)),
-                    description: 'PYUSD deposited into escrow contract'
+                    description: 'USDT deposited into escrow contract'
                 }
             ]
         };
@@ -324,7 +338,7 @@ export const getEscrowCounter = async () => {
     }
 };
 
-// Get PYUSD token address from contract
+// Get USDT token address from contract
 export const getPyusdTokenAddress = async () => {
     try {
         if (!isContractAvailable()) {
@@ -332,7 +346,7 @@ export const getPyusdTokenAddress = async () => {
         }
 
         const contractAddress = getContractAddress();
-        
+
         const tokenAddress = await publicClient.readContract({
             address: contractAddress,
             abi: SECUREDTRANSFER_CONTRACT.abi,
@@ -341,7 +355,7 @@ export const getPyusdTokenAddress = async () => {
 
         return tokenAddress;
     } catch (error) {
-        console.error('Error getting PYUSD token address:', error);
+        console.error('Error getting USDT token address:', error);
         return PYUSD_TOKEN_ADDRESS; // fallback to constant
     }
 };

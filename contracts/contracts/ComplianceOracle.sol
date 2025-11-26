@@ -6,8 +6,19 @@ import "./IComplianceOracle.sol";
 
 /**
  * @title ComplianceOracle
- * @dev RWA compliance oracle with KYC verification and AML screening for SecuredTransfer escrow system
- * Performs KYC checks, AML risk scoring, blacklist verification, and transaction limit enforcement
+ * @dev Fraud protection oracle for SecuredTransfer escrow system (Web3-native design)
+ *
+ * Core Functions:
+ * - Blacklist management (fraud/security risks)
+ * - AML risk scoring (suspicious behavior detection)
+ * - Wash trading prevention (same address check)
+ * - Manual flagging (admin override)
+ *
+ * KYC is OPTIONAL:
+ * - Protocol is permissionless by default (Web3 best practice)
+ * - Users can transact without KYC
+ * - KYC provides compliance badges/verification for users who want it
+ * - No transaction limits enforced (all users have unlimited access)
  */
 contract ComplianceOracle is IComplianceOracle, Ownable {
     
@@ -17,10 +28,12 @@ contract ComplianceOracle is IComplianceOracle, Ownable {
     uint8 public constant KYC_LEVEL_ADVANCED = 2;
     uint8 public constant KYC_LEVEL_INSTITUTIONAL = 3;
     
-    // Transaction limits based on KYC level (in token's smallest unit - PYUSD has 6 decimals)
-    uint256 public constant LIMIT_LEVEL_0 = 1000 * 10**6;      // $1,000
-    uint256 public constant LIMIT_LEVEL_1 = 10000 * 10**6;     // $10,000
-    uint256 public constant LIMIT_LEVEL_2 = 100000 * 10**6;    // $100,000
+    // Transaction limits based on KYC level (in token's smallest unit - USDT has 6 decimals)
+    // KYC is OPTIONAL - users without KYC can still use the protocol (Web3 best practice)
+    // KYC only provides higher limits for compliance-conscious users
+    uint256 public constant LIMIT_LEVEL_0 = type(uint256).max; // Unlimited (permissionless by default)
+    uint256 public constant LIMIT_LEVEL_1 = type(uint256).max; // Unlimited
+    uint256 public constant LIMIT_LEVEL_2 = type(uint256).max; // Unlimited
     uint256 public constant LIMIT_LEVEL_3 = type(uint256).max; // Unlimited
     
     uint256 public disputeWindowSeconds = 7 days;
@@ -170,66 +183,51 @@ contract ComplianceOracle is IComplianceOracle, Ownable {
             escrowCreationTime[escrowId] = block.timestamp;
         }
         
-        // Check 1: Blacklist
+        // Check 1: Blacklist (fraud protection - actual risk mitigation)
         if (blacklistedAddresses[buyer]) {
             flaggedEscrows[escrowId] = true;
-            flagReasons[escrowId] = "Buyer address is blacklisted";
+            flagReasons[escrowId] = "Buyer address is blacklisted for fraud/security reasons";
             emit EscrowFlagged(escrowId, buyer, flagReasons[escrowId]);
             return (true, flagReasons[escrowId]);
         }
-        
+
         if (blacklistedAddresses[seller]) {
             flaggedEscrows[escrowId] = true;
-            flagReasons[escrowId] = "Seller address is blacklisted";
+            flagReasons[escrowId] = "Seller address is blacklisted for fraud/security reasons";
             emit EscrowFlagged(escrowId, seller, flagReasons[escrowId]);
             return (true, flagReasons[escrowId]);
         }
-        
-        // Check 2: KYC verification required
-        if (kycLevel[buyer] == KYC_LEVEL_NONE) {
-            flaggedEscrows[escrowId] = true;
-            flagReasons[escrowId] = "Buyer has not completed KYC verification";
-            emit EscrowFlagged(escrowId, buyer, flagReasons[escrowId]);
-            return (true, flagReasons[escrowId]);
-        }
-        
-        // Check 3: Transaction limit based on KYC level
-        uint256 buyerLimit = getTransactionLimit(buyer);
-        if (amount > buyerLimit) {
-            flaggedEscrows[escrowId] = true;
-            flagReasons[escrowId] = "Transaction amount exceeds buyer's KYC limit";
-            emit EscrowFlagged(escrowId, buyer, flagReasons[escrowId]);
-            return (true, flagReasons[escrowId]);
-        }
-        
-        // Check 4: AML risk score
+
+        // Check 2: AML risk score (fraud detection - high-risk behavior patterns)
         if (amlRiskScore[buyer] > AML_HIGH_RISK_THRESHOLD) {
             flaggedEscrows[escrowId] = true;
-            flagReasons[escrowId] = "Buyer has high AML risk score";
+            flagReasons[escrowId] = "Buyer has high AML risk score - suspicious activity detected";
             emit EscrowFlagged(escrowId, buyer, flagReasons[escrowId]);
             return (true, flagReasons[escrowId]);
         }
-        
+
         if (amlRiskScore[seller] > AML_HIGH_RISK_THRESHOLD) {
             flaggedEscrows[escrowId] = true;
-            flagReasons[escrowId] = "Seller has high AML risk score";
+            flagReasons[escrowId] = "Seller has high AML risk score - suspicious activity detected";
             emit EscrowFlagged(escrowId, seller, flagReasons[escrowId]);
             return (true, flagReasons[escrowId]);
         }
-        
-        // Check 5: Same address
+
+        // Check 3: Same address (prevents wash trading / self-dealing)
         if (buyer == seller) {
             flaggedEscrows[escrowId] = true;
-            flagReasons[escrowId] = "Buyer and seller cannot be the same address";
+            flagReasons[escrowId] = "Buyer and seller cannot be the same address - prevents wash trading";
             emit EscrowFlagged(escrowId, buyer, flagReasons[escrowId]);
             return (true, flagReasons[escrowId]);
         }
-        
-        // Check 6: Manual flag
+
+        // Check 4: Manual flag (admin override for specific fraud cases)
         if (flaggedEscrows[escrowId]) {
             return (true, flagReasons[escrowId]);
         }
-        
+
+        // All checks passed - escrow is NOT flagged
+        // Note: Escrow can proceed even without KYC (permissionless Web3 design)
         return (false, "");
     }
     

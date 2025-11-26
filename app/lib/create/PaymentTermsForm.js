@@ -31,7 +31,7 @@ export default function PaymentTermsForm() {
         paymentType: 'fixed',
         amount: 2500,
         depositPercentage: 0,
-        paymentTerms: 'Full payment ($2,500) due upon completion and client approval. No deposit required - payment released only after successful delivery of all deliverables. Payment accepted in PYUSD stablecoin for transparent, secure transactions.',
+        paymentTerms: 'Full payment ($2,500) due upon completion and client approval. No deposit required - payment released only after successful delivery of all deliverables. Payment accepted in USDT stablecoin for transparent, secure transactions on Mantle Network.',
         requiresApproval: 'yes'
     };
 
@@ -104,7 +104,7 @@ export default function PaymentTermsForm() {
                 <Col span={12}>
                     <Form.Item
                         name="amount"
-                        label="Amount (PYUSD)"
+                        label="Amount (USDT)"
                         rules={[{ required: true, message: 'Please enter amount' }]}
                     >
                         <InputNumber

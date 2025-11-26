@@ -1,7 +1,7 @@
 import UiLayoutWrapper from './lib/UiLayoutWrapper';
 import DynamicWrapper from './lib/DynamicWrapper';
 import ErrorBoundary from './lib/ErrorBoundary';
-import BlockscoutProviders from './lib/BlockscoutProviders';
+import MantleExplorerProviders from './lib/BlockscoutProviders';
 
 import './globals.css';
 import { siteConfig } from './constants';
@@ -9,7 +9,6 @@ import { siteConfig } from './constants';
 export default function RootLayout({ children }) {
     return (
         <html>
-            {/* <Script async src="https://saturn.tech/widget.js" /> */}
             <head>
                 <link rel="icon" href="/favicon.ico" sizes="any" />
                 <title>
@@ -23,9 +22,9 @@ export default function RootLayout({ children }) {
             <body>
                 <ErrorBoundary>
                     <DynamicWrapper>
-                        <BlockscoutProviders>
+                        <MantleExplorerProviders>
                             <UiLayoutWrapper>{children}</UiLayoutWrapper>
-                        </BlockscoutProviders>
+                        </MantleExplorerProviders>
                     </DynamicWrapper>
                 </ErrorBoundary>
             </body>

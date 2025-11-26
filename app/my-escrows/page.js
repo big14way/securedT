@@ -333,7 +333,7 @@ export default function MyEscrowsPage() {
             render: (amount) => (
                 <Space>
                     <DollarOutlined style={{ color: '#00aef2' }} />
-                    <Text strong>${amount} PYUSD</Text>
+                    <Text strong>${amount} USDT</Text>
                 </Space>
             )
         },
@@ -450,7 +450,7 @@ export default function MyEscrowsPage() {
                     )}
                 </Space>
                 <Paragraph style={{ fontSize: '16px', color: '#666' }}>
-                    Manage your PYUSD escrow transactions with built-in fraud protection
+                    Manage your USDT escrow transactions with built-in compliance and fraud protection
                 </Paragraph>
             </div>
 
@@ -475,7 +475,7 @@ export default function MyEscrowsPage() {
                         icon={<LinkOutlined />}
                         onClick={() => showTokenTransactions(PYUSD_TOKEN_ADDRESS)}
                     >
-                        PYUSD Transactions
+                        USDT Transactions
                     </Button>,
                     <Button 
                         key="wallet" 

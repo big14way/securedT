@@ -2,10 +2,10 @@ import { expect } from "chai";
 import hre from "hardhat";
 import { parseUnits } from "viem";
 
-describe("ComplianceOracle", function () {
+describe("ComplianceOracle - Web3-Native Fraud Protection", function () {
   async function deployComplianceOracleFixture() {
     const [owner, user1, user2] = await hre.viem.getWalletClients();
-    
+
     const complianceOracle = await hre.viem.deployContract("ComplianceOracle");
     const publicClient = await hre.viem.getPublicClient();
 
@@ -18,7 +18,47 @@ describe("ComplianceOracle", function () {
     };
   }
 
-  describe("KYC Management", function () {
+  describe("Permissionless Design (Web3 Best Practice)", function () {
+    it("Should allow escrows WITHOUT KYC (permissionless)", async function () {
+      const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
+
+      // Both users have NO KYC - should still work (Web3 principle)
+      const result = await complianceOracle.read.checkEscrow([
+        1n,
+        user1.account.address,
+        user2.account.address,
+        parseUnits("5000", 6)
+      ]);
+
+      expect(result[0]).to.be.false; // NOT flagged - permissionless access
+      expect(result[1]).to.equal(""); // No reason
+    });
+
+    it("Should have unlimited transaction limits by default", async function () {
+      const { complianceOracle, user1 } = await deployComplianceOracleFixture();
+
+      // Level 0 (no KYC) - should be unlimited (Web3 best practice)
+      const limit = await complianceOracle.read.getTransactionLimit([user1.account.address]);
+      const maxUint256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+      expect(limit).to.equal(maxUint256);
+    });
+
+    it("Should allow any transaction amount without KYC", async function () {
+      const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
+
+      // Try creating a large escrow without KYC
+      const result = await complianceOracle.read.checkEscrow([
+        1n,
+        user1.account.address,
+        user2.account.address,
+        parseUnits("1000000", 6) // $1M - should work without KYC
+      ]);
+
+      expect(result[0]).to.be.false; // NOT flagged
+    });
+  });
+
+  describe("Optional KYC (Badge/Compliance Only)", function () {
     it("Should set KYC status correctly", async function () {
       const { complianceOracle, user1 } = await deployComplianceOracleFixture();
 
@@ -34,27 +74,28 @@ describe("ComplianceOracle", function () {
       expect(isVerified).to.be.true;
     });
 
-    it("Should return correct transaction limits", async function () {
+    it("Should return unlimited limits for all KYC levels", async function () {
       const { complianceOracle, user1 } = await deployComplianceOracleFixture();
+      const maxUint256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-      // Level 0 - $1,000
+      // Level 0 - Unlimited
       let limit = await complianceOracle.read.getTransactionLimit([user1.account.address]);
-      expect(limit).to.equal(parseUnits("1000", 6));
+      expect(limit).to.equal(maxUint256);
 
-      // Level 1 - $10,000
+      // Level 1 - Still unlimited
       await complianceOracle.write.setKYCStatus([user1.account.address, 1]);
       limit = await complianceOracle.read.getTransactionLimit([user1.account.address]);
-      expect(limit).to.equal(parseUnits("10000", 6));
+      expect(limit).to.equal(maxUint256);
 
-      // Level 2 - $100,000
+      // Level 2 - Still unlimited
       await complianceOracle.write.setKYCStatus([user1.account.address, 2]);
       limit = await complianceOracle.read.getTransactionLimit([user1.account.address]);
-      expect(limit).to.equal(parseUnits("100000", 6));
+      expect(limit).to.equal(maxUint256);
 
       // Level 3 - Unlimited
       await complianceOracle.write.setKYCStatus([user1.account.address, 3]);
       limit = await complianceOracle.read.getTransactionLimit([user1.account.address]);
-      expect(limit).to.equal(BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+      expect(limit).to.equal(maxUint256);
     });
 
     it("Should batch set KYC status", async function () {
@@ -72,14 +113,53 @@ describe("ComplianceOracle", function () {
     });
   });
 
-  describe("AML Risk Scoring", function () {
-    it("Should set AML risk score correctly", async function () {
+  describe("Fraud Protection (Actual Security)", function () {
+    it("Should flag blacklisted addresses", async function () {
+      const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
+
+      // Blacklist user1 for fraud
+      await complianceOracle.write.blacklistAddress([user1.account.address, "Fraudulent activity detected"]);
+
+      const result = await complianceOracle.read.checkEscrow([
+        1n,
+        user1.account.address,
+        user2.account.address,
+        parseUnits("500", 6)
+      ]);
+
+      expect(result[0]).to.be.true; // Flagged
+      expect(result[1]).to.include("blacklisted");
+    });
+
+    it("Should flag high AML risk scores", async function () {
+      const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
+
+      // Set high risk score for user1
+      await complianceOracle.write.setAMLRiskScore([user1.account.address, 85]);
+
+      const result = await complianceOracle.read.checkEscrow([
+        1n,
+        user1.account.address,
+        user2.account.address,
+        parseUnits("500", 6)
+      ]);
+
+      expect(result[0]).to.be.true; // Flagged
+      expect(result[1]).to.include("AML risk score");
+    });
+
+    it("Should prevent wash trading (same buyer/seller)", async function () {
       const { complianceOracle, user1 } = await deployComplianceOracleFixture();
 
-      await complianceOracle.write.setAMLRiskScore([user1.account.address, 50]);
+      const result = await complianceOracle.read.checkEscrow([
+        1n,
+        user1.account.address,
+        user1.account.address, // Same address for buyer and seller
+        parseUnits("500", 6)
+      ]);
 
-      const score = await complianceOracle.read.getAMLRiskScore([user1.account.address]);
-      expect(score).to.equal(50);
+      expect(result[0]).to.be.true; // Flagged
+      expect(result[1]).to.include("same address");
     });
 
     it("Should auto-blacklist high risk users", async function () {
@@ -92,69 +172,39 @@ describe("ComplianceOracle", function () {
       const isBlacklisted = await complianceOracle.read.blacklistedAddresses([user1.account.address]);
       expect(isBlacklisted).to.be.true;
     });
+
+    it("Should allow manual flagging", async function () {
+      const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
+
+      // Manually flag an escrow
+      await complianceOracle.write.flagEscrow([1n, user1.account.address, "Suspicious transaction pattern"]);
+
+      const result = await complianceOracle.read.checkEscrow([
+        1n,
+        user1.account.address,
+        user2.account.address,
+        parseUnits("500", 6)
+      ]);
+
+      expect(result[0]).to.be.true; // Flagged
+      expect(result[1]).to.include("Suspicious");
+    });
   });
 
-  describe("Escrow Compliance Checks", function () {
-    it("Should flag escrow if buyer has no KYC", async function () {
-      const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
+  describe("AML Risk Scoring", function () {
+    it("Should set AML risk score correctly", async function () {
+      const { complianceOracle, user1 } = await deployComplianceOracleFixture();
 
-      // user1 has no KYC, user2 has KYC
-      await complianceOracle.write.setKYCStatus([user2.account.address, 1]);
+      await complianceOracle.write.setAMLRiskScore([user1.account.address, 50]);
 
-      const result = await complianceOracle.read.checkEscrow([
-        1n,
-        user1.account.address,
-        user2.account.address,
-        parseUnits("500", 6)
-      ]);
-
-      expect(result[0]).to.be.true; // isFlagged
-      expect(result[1]).to.include("KYC verification");
+      const score = await complianceOracle.read.getAMLRiskScore([user1.account.address]);
+      expect(score).to.equal(50);
     });
 
-    it("Should flag escrow if amount exceeds buyer's limit", async function () {
+    it("Should allow escrows with low AML risk (no KYC required)", async function () {
       const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
 
-      // user1 has Basic KYC (limit $10,000)
-      await complianceOracle.write.setKYCStatus([user1.account.address, 1]);
-      await complianceOracle.write.setKYCStatus([user2.account.address, 1]);
-
-      // Try to create escrow for $15,000 (exceeds limit)
-      const result = await complianceOracle.read.checkEscrow([
-        1n,
-        user1.account.address,
-        user2.account.address,
-        parseUnits("15000", 6)
-      ]);
-
-      expect(result[0]).to.be.true; // isFlagged
-      expect(result[1]).to.include("KYC limit");
-    });
-
-    it("Should flag escrow if buyer has high AML risk", async function () {
-      const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
-
-      await complianceOracle.write.setKYCStatus([user1.account.address, 1]);
-      await complianceOracle.write.setKYCStatus([user2.account.address, 1]);
-      await complianceOracle.write.setAMLRiskScore([user1.account.address, 85]);
-
-      const result = await complianceOracle.read.checkEscrow([
-        1n,
-        user1.account.address,
-        user2.account.address,
-        parseUnits("500", 6)
-      ]);
-
-      expect(result[0]).to.be.true; // isFlagged
-      expect(result[1]).to.include("AML risk");
-    });
-
-    it("Should allow valid escrow", async function () {
-      const { complianceOracle, user1, user2 } = await deployComplianceOracleFixture();
-
-      // Both users have valid KYC and low risk
-      await complianceOracle.write.setKYCStatus([user1.account.address, 1]);
-      await complianceOracle.write.setKYCStatus([user2.account.address, 1]);
+      // Set low risk scores, no KYC
       await complianceOracle.write.setAMLRiskScore([user1.account.address, 10]);
       await complianceOracle.write.setAMLRiskScore([user2.account.address, 15]);
 
@@ -165,7 +215,7 @@ describe("ComplianceOracle", function () {
         parseUnits("500", 6)
       ]);
 
-      expect(result[0]).to.be.false; // not flagged
+      expect(result[0]).to.be.false; // NOT flagged - permissionless
     });
   });
 
@@ -177,12 +227,26 @@ describe("ComplianceOracle", function () {
       await complianceOracle.write.setAMLRiskScore([user1.account.address, 25]);
 
       const info = await complianceOracle.read.getComplianceInfo([user1.account.address]);
+      const maxUint256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
       expect(info[0]).to.equal(2); // KYC level
-      expect(info[1]).to.equal(parseUnits("100000", 6)); // Transaction limit
+      expect(info[1]).to.equal(maxUint256); // Transaction limit (unlimited)
       expect(info[2]).to.equal(25); // AML risk score
       expect(info[3]).to.be.false; // Not blacklisted
       expect(info[4]).to.be.greaterThan(0n); // Verified timestamp
+    });
+
+    it("Should return default info for users without KYC", async function () {
+      const { complianceOracle, user1 } = await deployComplianceOracleFixture();
+
+      const info = await complianceOracle.read.getComplianceInfo([user1.account.address]);
+      const maxUint256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+      expect(info[0]).to.equal(0); // KYC level 0
+      expect(info[1]).to.equal(maxUint256); // Unlimited (permissionless)
+      expect(info[2]).to.equal(0); // AML risk score 0
+      expect(info[3]).to.be.false; // Not blacklisted
+      expect(info[4]).to.equal(0n); // Not verified
     });
   });
 });

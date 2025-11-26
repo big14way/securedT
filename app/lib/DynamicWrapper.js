@@ -39,12 +39,15 @@ const DynamicWrapper = ({ children }) => {
     <DynamicContextProvider
       settings={{
         // Environment ID provided by user
-        environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID || "c4e54441-0fde-4888-a5e3-44c34def69af",
+        environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID || "80c9ac91-1cc0-454c-a570-9901c4eaef92",
         walletConnectors: [EthereumWalletConnectors],
-        appName: siteConfig.title,
-        appLogoUrl: "/logo.png",
-        primaryColor: "#ec348b",
+        appName: "SecuredTransfer",
+        appLogoUrl: undefined, // Use text branding instead of logo
+        primaryColor: "#00aef2",
         borderRadius: 8,
+        // Privacy and legal
+        privacyPolicyUrl: "https://github.com/big14way/securedT",
+        termsOfServiceUrl: "https://github.com/big14way/securedT",
         // WalletConnect configuration
         walletConnectPreferences: {
           projectId: WALLETCONNECT_PROJECT_ID,

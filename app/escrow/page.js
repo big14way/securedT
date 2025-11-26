@@ -18,11 +18,13 @@ import { formatUnits } from 'viem';
 const { Title, Paragraph, Text } = Typography;
 const { Step } = Steps;
 
+// KYC is OPTIONAL - for compliance badges only (Web3-native design)
+// All users have unlimited access regardless of KYC level
 const KYC_LEVELS = {
-    0: { name: 'None', color: 'default', limit: 1000 },
-    1: { name: 'Basic', color: 'blue', limit: 10000 },
-    2: { name: 'Advanced', color: 'green', limit: 100000 },
-    3: { name: 'Institutional', color: 'gold', limit: Infinity }
+    0: { name: 'None (Permissionless)', color: 'default', limit: Infinity },
+    1: { name: 'Basic (Verified)', color: 'blue', limit: Infinity },
+    2: { name: 'Advanced (Verified)', color: 'green', limit: Infinity },
+    3: { name: 'Institutional (Verified)', color: 'gold', limit: Infinity }
 };
 
 export default function DepositPage() {
@@ -52,8 +54,8 @@ export default function DepositPage() {
             try {
                 const info = await getComplianceInfo(walletAddress);
                 setKycLevel(info.level);
-                const limitInPyusd = Number(formatUnits(info.limit, 6));
-                setKycLimit(limitInPyusd);
+                const limitInUsdt = Number(formatUnits(info.limit, 6));
+                setKycLimit(limitInUsdt);
             } catch (error) {
                 console.error('Error loading KYC status:', error);
                 setKycLimit(1000); // Default to $1,000
@@ -118,29 +120,22 @@ export default function DepositPage() {
             return;
         }
 
-        // Check KYC compliance
-        if (kycLevel === 0) {
-            message.error('KYC verification required. Please complete KYC verification to create escrows.');
-            setTimeout(() => router.push('/kyc'), 1500);
-            return;
-        }
-
-        // Check transaction limit
-        if (values.amount > kycLimit) {
-            message.error(`Amount exceeds your KYC limit of $${kycLimit.toLocaleString()}. Please upgrade your KYC level or reduce the amount.`);
-            return;
-        }
+        // KYC is optional - protocol is permissionless (Web3 best practice)
+        // Users can create escrows without KYC
+        // KYC only provides compliance badges for those who want them
 
         // Check and switch network if needed
+        console.log('Network check:', { isCorrectNetwork });
         if (!isCorrectNetwork) {
-            message.info('Switching to Sepolia network...');
+            message.info('Switching to Mantle Sepolia Testnet...');
             try {
                 await ensureCorrectNetwork();
                 console.log('Network switched successfully');
             } catch (networkError) {
                 console.error('Network switch failed:', networkError);
-                message.error('Please manually switch your wallet to Sepolia network to continue');
-                return;
+                // Don't block - let user try anyway (wallet might already be on correct network)
+                message.warning('Network switch failed. If you are already on Mantle Sepolia, you can proceed.');
+                // Continue instead of returning - let the transaction fail if network is actually wrong
             }
         }
 
@@ -293,29 +288,42 @@ export default function DepositPage() {
 
         // If we get here, walletClient should be available
         setLoading(true);
+
+        // Progress message key for updating the same message
+        let progressKey = 'escrow-creation';
+
         try {
             console.log('Creating escrow with values:', values);
             console.log('Using wallet:', walletType, walletAddress);
-            
+
+            // Progress callback to show step-by-step UI updates
+            const onProgress = (step) => {
+                message.loading({ content: step, key: progressKey, duration: 0 });
+            };
+
             const hash = await createEscrow(
                 walletClient,
-                values.sellerAddress,  // Fix: use correct field name
+                values.sellerAddress,
                 values.amount,
-                values.description
+                values.description,
+                onProgress
             );
-            
+
+            // Success!
+            message.destroy(progressKey);
             message.success('Escrow created successfully!');
-            console.log('Transaction hash:', hash);
-            
-            // Show Blockscout transaction notification
+            console.log('Final transaction hash:', hash);
+
+            // Show Mantle Explorer transaction notification
             if (hash) {
                 await showTransactionToast(hash);
             }
-            
-            // Navigate to a transaction status page or back to my-escrows
+
+            // Navigate to my-escrows page
             router.push('/my-escrows');
         } catch (error) {
             console.error('Deposit failed:', error);
+            message.destroy(progressKey);
             message.error(error.message || 'Failed to create escrow');
         } finally {
             setLoading(false);
@@ -366,9 +374,9 @@ export default function DepositPage() {
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 24px' }}>
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <Title level={1}>Create PYUSD Escrow</Title>
+                <Title level={1}>Create USDT Escrow</Title>
                 <Paragraph style={{ fontSize: '18px', color: '#666' }}>
-                    Securely deposit PYUSD with built-in fraud protection and oracle verification
+                    Securely deposit USDT with built-in compliance, fraud protection, and oracle verification on Mantle Network
                 </Paragraph>
             </div>
 
@@ -440,7 +448,7 @@ export default function DepositPage() {
                     <Form.Item
                         label={
                             <Space>
-                                <span>PYUSD Amount</span>
+                                <span>USDT Amount</span>
                                 {!loadingKyc && walletAddress && (
                                     <Tag color={KYC_LEVELS[kycLevel].color} style={{ marginLeft: 8 }}>
                                         Limit: ${kycLimit.toLocaleString()}
@@ -450,60 +458,26 @@ export default function DepositPage() {
                         }
                         name="amount"
                         rules={[
-                            { required: true, message: 'Please enter the PYUSD amount' },
-                            { type: 'number', min: 0.01, message: 'Amount must be at least 0.01 PYUSD' },
+                            { required: true, message: 'Please enter the USDT amount' },
+                            { type: 'number', min: 0.01, message: 'Amount must be at least 0.01 USDT' },
                             { type: 'number', max: kycLimit, message: `Amount exceeds your KYC limit of $${kycLimit.toLocaleString()}` }
                         ]}
                     >
                         <InputNumber
                             prefix={<DollarOutlined />}
-                            placeholder="Enter amount in PYUSD"
+                            placeholder="Enter amount in USDT"
                             style={{ width: '100%', borderRadius: '8px' }}
                             step={0.01}
                             precision={2}
                         />
                     </Form.Item>
 
-                    {!loadingKyc && walletAddress && kycLevel === 0 && (
+                    {/* KYC is optional - show informational badge only if user has KYC */}
+                    {!loadingKyc && walletAddress && kycLevel > 0 && (
                         <Alert
-                            message="KYC Verification Required"
-                            description={
-                                <Space direction="vertical">
-                                    <Text>You must complete KYC verification before creating escrows.</Text>
-                                    <Button 
-                                        type="link" 
-                                        icon={<SafetyOutlined />}
-                                        onClick={() => router.push('/kyc')}
-                                        style={{ padding: 0 }}
-                                    >
-                                        Complete KYC Now
-                                    </Button>
-                                </Space>
-                            }
-                            type="warning"
-                            showIcon
-                            icon={<WarningOutlined />}
-                            style={{ marginBottom: 16 }}
-                        />
-                    )}
-
-                    {!loadingKyc && walletAddress && kycLevel > 0 && kycLevel < 3 && (
-                        <Alert
-                            message={`${KYC_LEVELS[kycLevel].name} KYC Active`}
-                            description={
-                                <Space direction="vertical" size="small">
-                                    <Text>Your current limit is ${kycLimit.toLocaleString()}.</Text>
-                                    <Button 
-                                        type="link" 
-                                        icon={<SafetyOutlined />}
-                                        onClick={() => router.push('/kyc')}
-                                        style={{ padding: 0 }}
-                                    >
-                                        Upgrade KYC Level for Higher Limits
-                                    </Button>
-                                </Space>
-                            }
-                            type="info"
+                            message={`${KYC_LEVELS[kycLevel].name} - Optional Compliance Badge`}
+                            description="KYC is optional. You have unlimited access regardless of verification status."
+                            type="success"
                             showIcon
                             style={{ marginBottom: 16 }}
                         />

@@ -58,7 +58,7 @@ export default function DeployStepContent({
                 <Text type="secondary">{offerData.category}</Text>
                 <Divider />
                 <Paragraph>{offerData.description}</Paragraph>
-                <Text strong>Amount: ${offerData.amount} PYUSD</Text>
+                <Text strong>Amount: ${offerData.amount} USDT</Text>
                 <br />
                 <Text strong>Payment Type: {offerData.paymentType}</Text>
                 {offerData.paymentType === 'deposit' && offerData.depositPercentage !== undefined && (

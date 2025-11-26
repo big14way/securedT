@@ -47,11 +47,26 @@ export function useWalletClient() {
         let provider;
         try {
             // Try multiple methods to get the provider from Dynamic.xyz
-            provider = primaryWallet.connector.provider || 
-                      primaryWallet.connector.getProvider?.() ||
-                      primaryWallet.connector.ethereum ||
-                      primaryWallet.connector._provider ||
-                      asyncProvider;
+            // Wrap each in try-catch to prevent SDK errors from breaking everything
+            try {
+                provider = primaryWallet.connector.provider;
+            } catch (e) {
+                console.log('provider property failed:', e.message);
+            }
+
+            if (!provider) {
+                try {
+                    provider = primaryWallet.connector.getProvider?.();
+                } catch (e) {
+                    console.log('getProvider() failed:', e.message);
+                }
+            }
+
+            if (!provider) {
+                provider = primaryWallet.connector.ethereum ||
+                           primaryWallet.connector._provider ||
+                           asyncProvider;
+            }
             
             // For Coinbase wallet, sometimes we need to get it from window.ethereum
             if (!provider && (connectorKey === 'coinbasewallet' || connectorKey === 'coinbase')) {

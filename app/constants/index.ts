@@ -4,7 +4,7 @@ import { mantleSepoliaTestnet, mantle } from 'viem/chains';
 export const siteConfig = {
     title: 'SecuredTransfer | Stablecoin Consumer Protection On-Chain',
     name: 'SecuredTransfer',
-    description: 'Bringing PayPal-like consumer protection to on-chain stablecoin payments using fraud attestations and transparent oracles on Mantle Network',
+    description: 'Tokenizing real-world invoices as tradable NFTs with instant liquidity through blockchain-based escrow and compliance on Mantle Network',
     cta: {
         primary: 'Create Escrow',
         secondary: 'Learn More'
@@ -120,7 +120,7 @@ export const ESCROW_CREATION_STEPS = [
     },
     {
         title: 'Deposit Funds',
-        description: 'Deposit PYUSD into escrow'
+        description: 'Deposit USDT into escrow'
     },
     {
         title: 'Confirmation',

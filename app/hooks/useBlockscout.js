@@ -141,9 +141,9 @@ export function useBlockscout() {
     };
 
     /**
-     * Show transactions for PYUSD token contract
-     * This displays all PYUSD token transfers on the chain
-     * @param {string} tokenAddress - PYUSD token address
+     * Show transactions for USDT token contract
+     * This displays all USDT token transfers on the chain
+     * @param {string} tokenAddress - USDT token address
      * @param {boolean} showMessage - Whether to show an info message (default: true)
      */
     const showTokenTransactions = (tokenAddress, showMessage = true) => {
@@ -153,18 +153,18 @@ export function useBlockscout() {
                 content: (
                     <div>
                         <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                            PYUSD Token Transactions
+                            USDT Token Transactions
                         </div>
                         <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                            Viewing all PYUSD transfers on the network
+                            Viewing all USDT transfers on Mantle Network
                         </div>
-                        <a 
-                            href={explorerLink} 
-                            target="_blank" 
+                        <a
+                            href={explorerLink}
+                            target="_blank"
                             rel="noopener noreferrer"
                             style={{ fontSize: '11px', marginTop: 4, display: 'block' }}
                         >
-                            View PYUSD token on explorer →
+                            View USDT token on Mantle Explorer →
                         </a>
                     </div>
                 ),

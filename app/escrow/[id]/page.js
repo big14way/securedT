@@ -256,7 +256,7 @@ export default function EscrowDetailsPage() {
             message.success('Funds released successfully!');
             console.log('Transaction hash:', hash);
             
-            // Show transaction notification in Blockscout (non-blocking)
+            // Show transaction notification in Mantle Explorer (non-blocking)
             if (hash) {
                 showTransactionToast(hash);
             }
@@ -289,7 +289,7 @@ export default function EscrowDetailsPage() {
             message.success('Refund processed successfully!');
             console.log('Transaction hash:', hash);
             
-            // Show transaction notification in Blockscout (non-blocking)
+            // Show transaction notification in Mantle Explorer (non-blocking)
             if (hash) {
                 showTransactionToast(hash);
             }
@@ -327,7 +327,7 @@ export default function EscrowDetailsPage() {
             message.success('Escrow marked as fraudulent and funds refunded to buyer!');
             console.log('Transaction hash:', hash);
             
-            // Show transaction notification in Blockscout (non-blocking)
+            // Show transaction notification in Mantle Explorer (non-blocking)
             if (hash) {
                 showTransactionToast(hash);
             }
@@ -595,7 +595,7 @@ export default function EscrowDetailsPage() {
                             <Descriptions.Item label="Amount">
                                 <Space>
                                     <DollarOutlined style={{ color: '#00aef2' }} />
-                                    <Text strong style={{ fontSize: '18px' }}>${escrowData.amount} PYUSD</Text>
+                                    <Text strong style={{ fontSize: '18px' }}>${escrowData.amount} USDT</Text>
                                 </Space>
                             </Descriptions.Item>
                             <Descriptions.Item label="Buyer">
@@ -840,9 +840,9 @@ export default function EscrowDetailsPage() {
                                     href={`${getExplorerUrl()}/address/${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS}?tab=txs`}
                                     target="_blank"
                                     icon={<LinkOutlined />}
-                                    title={`View all contract transactions on Blockscout. Filter by escrow ID #${escrowData.id} to find related transactions.`}
+                                    title={`View all contract transactions on Mantle Explorer. Filter by escrow ID #${escrowData.id} to find related transactions.`}
                                 >
-                                    View on Blockscout
+                                    View on Mantle Explorer
                                 </Button>
                             )}
                         </Space>

@@ -10,8 +10,8 @@ import { useRouter } from 'next/navigation';
 import { colors } from './theme/colors';
 
 const CHECKLIST_ITEMS = [
-	"Secure PYUSD escrow with fraud protection",
-	"Automated refunds via oracle attestations", 
+	"Secure USDT escrow with compliance & fraud protection",
+	"Automated refunds via oracle attestations",
 	"Transparent on-chain transaction history"
 ];
 
@@ -49,8 +49,8 @@ const Home = () => {
 											margin: 0
 										}}
 									>
-										PYUSD Consumer Protection
-										<span style={{ color: '#00aef2', display: 'block' }}>On-Chain</span>
+										Enterprise RWA Payments
+										<span style={{ color: '#00aef2', display: 'block' }}>On Mantle Network</span>
 									</h1>
 									<p
 										style={{
@@ -61,7 +61,7 @@ const Home = () => {
 											maxWidth: '500px'
 										}}
 									>
-										Bringing PayPal-like consumer protection to on-chain stablecoin payments using fraud attestations and transparent oracles.
+										Tokenize invoices as tradable NFTs with instant liquidity through blockchain-based escrow and compliance on Mantle's ultra-low-cost Layer 2.
 									</p>
 								</div>
 
@@ -205,7 +205,7 @@ const Home = () => {
 													animationDelay: '1s'
 												}}
 											>
-												💰 PYUSD
+												💰 USDT
 											</div>
 											<div
 												style={{

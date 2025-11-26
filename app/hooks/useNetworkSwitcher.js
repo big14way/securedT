@@ -204,7 +204,7 @@ export const useNetworkSwitcher = () => {
           // If chain doesn't exist (error 4902), try to add it
           if (switchError.code === 4902 || switchError.message?.includes('Unrecognized chain ID')) {
             try {
-              console.log('Chain not found, attempting to add Sepolia...');
+              console.log('Chain not found, attempting to add Mantle Sepolia...');
               const chainParams = {
                 chainId: targetChainIdHex,
                 chainName: ACTIVE_CHAIN.name,

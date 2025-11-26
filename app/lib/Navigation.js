@@ -14,10 +14,10 @@ import {
     ShoppingOutlined,
     LineChartOutlined
 } from '@ant-design/icons';
-import Logo from './Logo';
 import { useBlockscout } from '../hooks/useBlockscout';
 import { useWalletAddress } from '../hooks/useWalletAddress';
 import { getComplianceInfo, isContractAvailable } from '../util/securedTransferContract';
+import { APP_NAME } from '../constants';
 
 const { Text } = Typography;
 
@@ -146,7 +146,17 @@ export default function Navigation() {
                     style={{ cursor: 'pointer', flex: '0 0 auto', height: 40, display: 'flex', alignItems: 'center' }}
                     onClick={() => router.push('/')}
                 >
-                    <Logo size="small" style={{ height: 32 }} />
+                    <Text
+                        strong
+                        style={{
+                            fontSize: '20px',
+                            color: '#00aef2',
+                            fontWeight: 700,
+                            letterSpacing: '-0.5px'
+                        }}
+                    >
+                        {APP_NAME}
+                    </Text>
                 </div>
                 <div
                     style={{

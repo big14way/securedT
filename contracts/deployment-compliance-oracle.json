@@ -1,0 +1,16 @@
+{
+  "network": "Mantle Sepolia Testnet",
+  "chainId": 5003,
+  "complianceOracleAddress": "0x99ce6cc9064a6a88b6fb4abda170844c45d8d1ae",
+  "deployer": "0x3C343AD077983371b29fee386bdBC8a92E934C51",
+  "deployedAt": "2025-11-26T14:58:58.821Z",
+  "blockNumber": "31312230",
+  "transactionHash": "0x532fbf58a47d3eeac49f8cc60ce3cf0d1d8366915de0def1f46dc389e724e458",
+  "design": "Web3-Native Permissionless",
+  "features": [
+    "No KYC required",
+    "Unlimited transaction limits",
+    "Fraud protection via blacklist & AML",
+    "Optional KYC for compliance badges"
+  ]
+}

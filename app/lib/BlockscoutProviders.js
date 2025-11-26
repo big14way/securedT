@@ -7,11 +7,12 @@ import React from 'react';
  * Provides simplified explorer integration for Mantle Network
  * Uses Ant Design's message component for notifications
  */
-export default function MantleExplorerProviders({ children }) {
+export function MantleExplorerProviders({ children }) {
     // No providers needed - we'll use Ant Design's message API directly
     // and open explorer links in new tabs
     return <>{children}</>;
 }
 
-// Export as BlockscoutProviders for backward compatibility
+// Export as default and BlockscoutProviders for backward compatibility
+export default MantleExplorerProviders;
 export { MantleExplorerProviders as BlockscoutProviders };

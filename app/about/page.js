@@ -20,7 +20,7 @@ export default function About() {
                     About {APP_NAME}
                 </Title>
                 <Paragraph style={{ fontSize: '20px', color: '#666', maxWidth: '700px', margin: '0 auto 32px' }}>
-                    <b>SecuredTransfer</b> is a PYUSD escrow system with fraud protection. Create secure escrow transactions with automatic refunds via oracle attestations—bringing PayPal-like consumer protection to on-chain payments.
+                    <b>SecuredTransfer</b> is a Web3-native, permissionless USDT escrow system with fraud protection on Mantle Network. Tokenize real-world invoices as tradable NFTs with instant liquidity through blockchain-based escrow—bringing enterprise-grade payment protection to on-chain transactions without KYC barriers.
                 </Paragraph>
                 
                 <Button 
@@ -48,12 +48,12 @@ export default function About() {
                     <Col xs={24} md={4}></Col>
                     <Col xs={24} md={16}>
                         <ol style={{ fontSize: '18px', color: '#444', lineHeight: '2', paddingLeft: '24px' }}>
-                            <li>Connect wallet via Dynamic to authenticate as client or service provider.</li>
-                            <li>Client submits a service request form with payment details.</li>
-                            <li>Smart contract is deployed via Hardhat; PYUSD payment is deposited.</li>
-                            <li>Service provider reviews request and generates an offer.</li>
-                            <li>Client approves; contract releases payment automatically.</li>
-                            <li>Both parties receive confirmation and transaction records on-chain.</li>
+                            <li>Connect wallet via WalletConnect v2 (supports 300+ wallets including MetaMask, Coinbase Wallet).</li>
+                            <li>Create escrow with USDT on Mantle Network's ultra-low-cost Layer 2.</li>
+                            <li>Automatic invoice NFT minting (ERC-721) for tradable real-world assets.</li>
+                            <li>Optional yield generation via cmETH staking (7.2% APY) or collateral for working capital (80% LTV).</li>
+                            <li>Fraud protection via ComplianceOracle (blacklist, AML scoring, wash trading prevention) - permissionless by default.</li>
+                            <li>Secure release/refund with fraud protection and on-chain transparency via Mantle Explorer.</li>
                         </ol>
                     </Col>
                     <Col xs={24} md={4}></Col>
@@ -88,20 +88,23 @@ export default function About() {
                     <Col xs={24} md={12}>
                         <Card title="Core Infrastructure" style={{ height: '100%' }}>
                             <ul style={{ paddingLeft: '20px', color: '#666' }}>
-                                <li>Dynamic: wallet-based authentication for clients and providers</li>
-                                <li>Hardhat: smart contract development, deployment, and on-chain automation</li>
-                                <li>PYUSD: stablecoin payments for deposits, milestones, and offers</li>
-                                <li>Vercel: open-source hosting and deployment</li>
+                                <li><b>Mantle Network:</b> Layer 2 with ultra-low gas fees (~0.02 gwei)</li>
+                                <li><b>WalletConnect v2:</b> Multi-wallet support (300+ wallets)</li>
+                                <li><b>Hardhat + Viem:</b> Smart contract development and type-safe interactions</li>
+                                <li><b>USDT:</b> Stablecoin payments for escrow and invoices (6 decimals)</li>
+                                <li><b>cmETH:</b> Liquid staking on Mantle for 7.2% APY yield generation</li>
+                                <li><b>INIT Capital:</b> Collateral lending for working capital (80% LTV)</li>
                             </ul>
                         </Card>
                     </Col>
                     <Col xs={24} md={12}>
                         <Card title="Frontend & Integration" style={{ height: '100%' }}>
                             <ul style={{ paddingLeft: '20px', color: '#666' }}>
-                                <li>Next.js React application with modern UI components</li>
-                                <li>Wagmi hooks for seamless Web3 wallet integration</li>
-                                <li>Ethers.js for blockchain interactions and transaction handling</li>
-                                <li>Ant Design for professional, responsive user interface</li>
+                                <li><b>Next.js 14:</b> React application with App Router</li>
+                                <li><b>Viem + Wagmi:</b> Type-safe Web3 wallet integration</li>
+                                <li><b>Dynamic SDK:</b> Seamless wallet management</li>
+                                <li><b>Ant Design:</b> Professional, responsive UI/UX</li>
+                                <li><b>Mantle Explorer:</b> On-chain transaction transparency</li>
                             </ul>
                         </Card>
                     </Col>
@@ -113,32 +116,33 @@ export default function About() {
                 <Card style={{ background: '#f8f9fa' }}>
                     <Title level={3}>Open Source & Future Work</Title>
                     <Paragraph style={{ fontSize: '16px', color: '#666', marginBottom: '24px' }}>
-                        {APP_NAME} is open source and built for the hackathon community. Future enhancements could include:
+                        {APP_NAME} is open source with 5 deployed smart contracts on Mantle Sepolia testnet. Future enhancements could include:
                         <ul style={{ textAlign: 'left', margin: '16px auto', maxWidth: '600px', color: '#666' }}>
-                            <li>Recurring subscriptions or retainers (automated PYUSD payments)</li>
-                            <li>Cross-chain support for broader ecosystem compatibility</li>
-                            <li>Document attachment verification with decentralized storage</li>
+                            <li>Mainnet deployment on Mantle Network (Chain ID: 5000)</li>
+                            <li>Enhanced invoice factoring marketplace with liquidity pools</li>
+                            <li>Real INIT Capital integration for mainnet collateral lending</li>
                             <li>Multi-party escrow and milestone-based releases</li>
-                            <li>Integration with fiat on-ramps for easier adoption</li>
+                            <li>Document attachment verification with IPFS/Arweave</li>
+                            <li>Cross-chain support via Layer Zero or Wormhole</li>
                         </ul>
-                        The complete source code, smart contracts, and documentation are available on GitHub.
+                        The complete source code, smart contracts, and comprehensive documentation are available on GitHub.
                     </Paragraph>
                     <Space size="middle">
-                        <Button 
-                            type="default" 
+                        <Button
+                            type="default"
                             size="large"
-                            href="https://github.com/cbonoz/ethnyc25" 
+                            href="https://github.com/big14way/securedT"
                             target="_blank"
                             icon={<CodeOutlined />}
                         >
                             View Source Code
                         </Button>
-                        <Button 
-                            type="primary" 
+                        <Button
+                            type="primary"
                             size="large"
                             onClick={() => router.push('/escrow')}
                         >
-                            Try the Demo
+                            Create Escrow
                         </Button>
                     </Space>
                 </Card>
