@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Typography, Space, Button, Table, Tag, Statistic, Row, Col, Slider, InputNumber, message, Modal, Alert, Progress, Tooltip } from 'antd';
+import { App, Card, Typography, Space, Button, Table, Tag, Statistic, Row, Col, Slider, InputNumber, Modal, Alert, Progress, Tooltip } from 'antd';
 import { 
     DollarOutlined, 
     RiseOutlined,
@@ -58,6 +58,7 @@ const MOCK_COLLATERALIZED_ESCROWS = [
 ];
 
 export default function CollateralDashboard() {
+    const { message } = App.useApp();
     const router = useRouter();
     const { address: walletAddress, isConnected } = useWalletAddress();
     const walletClient = useWalletClient();

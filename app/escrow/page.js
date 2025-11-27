@@ -1,19 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Form, Input, InputNumber, Typography, Space, Alert, Steps, message, Tag, Switch, Tooltip, Statistic } from 'antd';
+import { App, Button, Card, Form, Input, InputNumber, Typography, Space, Alert, Steps, Tag, Switch, Tooltip, Statistic } from 'antd';
 import { LockOutlined, UserOutlined, DollarOutlined, ThunderboltOutlined, SafetyOutlined, WarningOutlined, RiseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { createEscrow, isContractAvailable, isFraudOracleConfigured, getComplianceInfo } from '../util/securedTransferContract';
+import { getTestUSDT, checkUSDTBalance } from '../util/mockUsdtFaucet';
 import { useWalletClient } from '../hooks/useWalletClient';
 import { useWalletAddress } from '../hooks/useWalletAddress';
 import { useNetworkSwitcher } from '../hooks/useNetworkSwitcher';
 import { useBlockscout } from '../hooks/useBlockscout';
-import { ESCROW_CREATION_STEPS, DEMO_DATA } from '../constants';
+import { ESCROW_CREATION_STEPS, DEMO_DATA, NETWORK } from '../constants';
 import DemoModeAlert from '../lib/DemoModeAlert';
 import ConnectButton from '../lib/ConnectButton';
-import { formatUnits } from 'viem';
+import { formatUnits, createPublicClient, http } from 'viem';
+import { mantleSepoliaTestnet } from 'viem/chains';
 
 const { Title, Paragraph, Text } = Typography;
 const { Step } = Steps;
@@ -28,6 +30,7 @@ const KYC_LEVELS = {
 };
 
 export default function DepositPage() {
+    const { message } = App.useApp();
     const router = useRouter();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
@@ -42,6 +45,8 @@ export default function DepositPage() {
     const [loadingKyc, setLoadingKyc] = useState(true);
     const [yieldEnabled, setYieldEnabled] = useState(false);
     const [estimatedYield, setEstimatedYield] = useState(null);
+    const [usdtBalance, setUsdtBalance] = useState(null);
+    const [loadingFaucet, setLoadingFaucet] = useState(false);
 
     // Load KYC status
     useEffect(() => {
@@ -66,6 +71,67 @@ export default function DepositPage() {
 
         loadKycStatus();
     }, [walletAddress]);
+
+    // Check USDT balance
+    useEffect(() => {
+        const checkBalance = async () => {
+            if (!walletAddress || NETWORK !== 'testnet') {
+                setUsdtBalance(null);
+                return;
+            }
+
+            try {
+                const publicClient = createPublicClient({
+                    chain: mantleSepoliaTestnet,
+                    transport: http()
+                });
+
+                const balance = await checkUSDTBalance(publicClient, walletAddress);
+                setUsdtBalance(balance);
+            } catch (error) {
+                console.error('Error checking USDT balance:', error);
+            }
+        };
+
+        checkBalance();
+        // Recheck balance every 10 seconds
+        const interval = setInterval(checkBalance, 10000);
+        return () => clearInterval(interval);
+    }, [walletAddress]);
+
+    // Handle faucet button click
+    const handleGetTestUSDT = async () => {
+        if (!walletClient) {
+            message.warning('Please connect your wallet first');
+            return;
+        }
+
+        setLoadingFaucet(true);
+        try {
+            const hash = await getTestUSDT(walletClient);
+            message.loading({ content: 'Getting test USDT...', key: 'faucet', duration: 0 });
+
+            // Wait for transaction
+            const publicClient = createPublicClient({
+                chain: mantleSepoliaTestnet,
+                transport: http()
+            });
+            await publicClient.waitForTransactionReceipt({ hash });
+
+            // Refresh balance
+            const balance = await checkUSDTBalance(publicClient, walletAddress);
+            setUsdtBalance(balance);
+
+            message.destroy('faucet');
+            message.success('Successfully received 1,000 test USDT!');
+        } catch (error) {
+            console.error('Failed to get test USDT:', error);
+            message.destroy('faucet');
+            message.error(error.message || 'Failed to get test USDT');
+        } finally {
+            setLoadingFaucet(false);
+        }
+    };
 
     // Debug wallet connection state
     useEffect(() => {
@@ -397,6 +463,38 @@ export default function DepositPage() {
                     type="warning"
                     showIcon
                     style={{ marginBottom: '24px' }}
+                />
+            )}
+
+            {/* Show USDT balance and faucet button on testnet */}
+            {walletAddress && NETWORK === 'testnet' && usdtBalance !== null && (
+                <Alert
+                    message={
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                                <span>
+                                    <DollarOutlined /> Test USDT Balance: <strong>{formatUnits(usdtBalance, 6)} USDT</strong>
+                                </span>
+                                <Button
+                                    type="primary"
+                                    size="small"
+                                    onClick={handleGetTestUSDT}
+                                    loading={loadingFaucet}
+                                    disabled={loadingFaucet}
+                                >
+                                    Get 1,000 Test USDT
+                                </Button>
+                            </Space>
+                            {usdtBalance === 0n && (
+                                <Text type="warning" style={{ fontSize: '12px' }}>
+                                    ⚠️ You need test USDT to create escrows. Click the button above to get 1,000 USDT for free!
+                                </Text>
+                            )}
+                        </Space>
+                    }
+                    type={usdtBalance === 0n ? 'warning' : 'info'}
+                    showIcon
+                    style={{ marginBottom: '16px' }}
                 />
             )}
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { Alert, Button, Spin, message } from 'antd';
+import { App, Alert, Button, Spin } from 'antd';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useNetworkSwitcher } from '../hooks/useNetworkSwitcher';
 import { useState, useEffect } from 'react';
 
 const NetworkStatus = ({ showSwitcher = true, style = {} }) => {
+  const { message } = App.useApp();
   const { primaryWallet } = useDynamicContext();
   const { 
     isCorrectNetwork, 

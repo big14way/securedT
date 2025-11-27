@@ -22,26 +22,15 @@ export const useNetworkSwitcher = () => {
     try {
       console.log('Checking network for wallet:', primaryWallet.connector?.key || 'unknown');
       console.log('Required chain ID:', ACTIVE_CHAIN.id, 'Required chain name:', ACTIVE_CHAIN.name);
-      
+
       let currentChainId;
-      
-      // Method 1: Check window.ethereum first for browser wallets (most reliable)
-      if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-          currentChainId = parseInt(chainId, 16);
-          console.log('Chain ID from window.ethereum:', currentChainId);
-        } catch (error) {
-          console.log('window.ethereum.request failed:', error);
-        }
-      }
-      
-      // Method 2: Try getting network from connector
+
+      // Method 1: Try getting network from Dynamic connector first (most reliable after switch)
       if (!currentChainId) {
         try {
           const network = await primaryWallet.connector.getNetwork();
           console.log('Network from connector.getNetwork():', network);
-          
+
           // Handle different network response formats
           if (typeof network === 'number') {
             currentChainId = network;
@@ -56,8 +45,8 @@ export const useNetworkSwitcher = () => {
           console.log('connector.getNetwork() failed:', error);
         }
       }
-      
-      // Method 3: Try getting chain ID directly from provider if available
+
+      // Method 2: Try getting chain ID directly from provider if available
       if (!currentChainId && primaryWallet.connector?.provider) {
         try {
           const provider = primaryWallet.connector.provider;
@@ -97,7 +86,18 @@ export const useNetworkSwitcher = () => {
           console.log('Coinbase wallet detection failed:', error);
         }
       }
-      
+
+      // Method 6: LAST RESORT - Check window.ethereum (may not reflect Dynamic wallet state)
+      if (!currentChainId && typeof window !== 'undefined' && window.ethereum) {
+        try {
+          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          currentChainId = parseInt(chainId, 16);
+          console.log('Chain ID from window.ethereum (last resort):', currentChainId);
+        } catch (error) {
+          console.log('window.ethereum.request failed:', error);
+        }
+      }
+
       if (!currentChainId) {
         console.error('Unable to determine chain ID from any method');
         console.log('Wallet details:', {

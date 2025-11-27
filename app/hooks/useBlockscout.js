@@ -1,14 +1,13 @@
 'use client';
 
 import { ACTIVE_CHAIN, siteConfig, getExplorerLink } from '../constants';
-import { message } from 'antd';
 
 /**
  * Custom hook for Mantle Explorer integration (Replaces Blockscout SDK)
- * Uses Ant Design's message API for notifications and opens explorer links
+ * Opens explorer links directly (pages should handle their own notifications)
  */
 export function useBlockscout() {
-    // Mantle Explorer doesn't have an SDK, so we use direct links and toast notifications
+    // Mantle Explorer doesn't have an SDK, so we use direct links
 
     // Get the current chain ID as a string (Blockscout expects string)
     const chainId = ACTIVE_CHAIN.id.toString();
@@ -21,32 +20,13 @@ export function useBlockscout() {
     const showTransactionToast = async (txHash, customChainId = chainId) => {
         try {
             const explorerLink = getExplorerLink(txHash, 'tx', customChainId);
-            
-            message.loading({
-                content: (
-                    <div>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                            Transaction Pending
-                        </div>
-                        <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                            Waiting for confirmation...
-                        </div>
-                        <a 
-                            href={explorerLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            style={{ fontSize: '11px', marginTop: 4, display: 'block' }}
-                        >
-                            View on Mantle Explorer →
-                        </a>
-                    </div>
-                ),
-                duration: 4,
-                key: txHash,
-                style: { marginTop: '60px' }
-            });
+            console.log('Transaction submitted:', txHash);
+            console.log('View on Mantle Explorer:', explorerLink);
+            // Note: Pages should use their own message API to show notifications
+            return explorerLink;
         } catch (error) {
-            console.error('Failed to show transaction toast:', error);
+            console.error('Failed to get transaction link:', error);
+            return null;
         }
     };
 
@@ -60,29 +40,19 @@ export function useBlockscout() {
     const showAddressTransactions = (address, customChainId = chainId, label = null) => {
         try {
             const explorerLink = getExplorerLink(address, 'address', customChainId);
-            
+
             if (label) {
-                message.info({
-                    content: (
-                        <div>
-                            <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                                {label} Transactions
-                            </div>
-                            <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                                Opening Mantle Explorer...
-                            </div>
-                        </div>
-                    ),
-                    duration: 3,
-                    style: { marginTop: '60px' }
-                });
+                console.log(`Opening ${label} transactions on Mantle Explorer`);
             }
-            
+
             // Open Mantle Explorer in new tab
-            window.open(explorerLink, '_blank', 'noopener,noreferrer');
+            if (typeof window !== 'undefined') {
+                window.open(explorerLink, '_blank', 'noopener,noreferrer');
+            }
+            return explorerLink;
         } catch (error) {
             console.error('Failed to open Mantle Explorer:', error);
-            message.error('Failed to open explorer');
+            return null;
         }
     };
 
@@ -93,12 +63,15 @@ export function useBlockscout() {
      */
     const showChainTransactions = (customChainId = chainId) => {
         try {
-            const explorerUrl = getExplorerUrl(customChainId);
-            message.info('Opening Mantle Explorer...', 2);
-            window.open(explorerUrl, '_blank', 'noopener,noreferrer');
+            const explorerUrl = ACTIVE_CHAIN.blockExplorers.default.url;
+            console.log('Opening Mantle Explorer...');
+            if (typeof window !== 'undefined') {
+                window.open(explorerUrl, '_blank', 'noopener,noreferrer');
+            }
+            return explorerUrl;
         } catch (error) {
             console.error('Failed to open Mantle Explorer:', error);
-            message.error('Failed to open explorer');
+            return null;
         }
     };
 
@@ -111,33 +84,10 @@ export function useBlockscout() {
      */
     const showContractTransactions = (contractAddress, showMessage = true) => {
         if (showMessage) {
-            // Show a friendly message with app name and contract link
-            const explorerLink = getExplorerLink(contractAddress, 'address');
-            message.info({
-                content: (
-                    <div>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                            {siteConfig.name} Contract Transactions
-                        </div>
-                        <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                            Viewing all transactions for the escrow contract
-                        </div>
-                        <a 
-                            href={explorerLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            style={{ fontSize: '11px', marginTop: 4, display: 'block' }}
-                        >
-                            View full contract on explorer →
-                        </a>
-                    </div>
-                ),
-                duration: 4,
-                style: { marginTop: '60px' }
-            });
+            console.log(`Opening ${siteConfig.name} contract transactions on Mantle Explorer`);
         }
-        
-        showAddressTransactions(contractAddress);
+
+        return showAddressTransactions(contractAddress);
     };
 
     /**
@@ -148,32 +98,10 @@ export function useBlockscout() {
      */
     const showTokenTransactions = (tokenAddress, showMessage = true) => {
         if (showMessage) {
-            const explorerLink = getExplorerLink(tokenAddress, 'token');
-            message.info({
-                content: (
-                    <div>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                            USDT Token Transactions
-                        </div>
-                        <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                            Viewing all USDT transfers on Mantle Network
-                        </div>
-                        <a
-                            href={explorerLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ fontSize: '11px', marginTop: 4, display: 'block' }}
-                        >
-                            View USDT token on Mantle Explorer →
-                        </a>
-                    </div>
-                ),
-                duration: 4,
-                style: { marginTop: '60px' }
-            });
+            console.log('Opening USDT token transactions on Mantle Explorer');
         }
-        
-        showAddressTransactions(tokenAddress);
+
+        return showAddressTransactions(tokenAddress);
     };
 
     /**

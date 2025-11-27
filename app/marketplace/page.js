@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Button, Tag, Modal, InputNumber, message, Spin, Empty, Typography } from 'antd';
+import { App, Card, Row, Col, Statistic, Button, Tag, Modal, InputNumber, Spin, Empty, Typography } from 'antd';
 import { DollarOutlined, ClockCircleOutlined, UserOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useAccount } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
@@ -80,6 +80,7 @@ const ERC20_ABI = [
 ];
 
 export default function MarketplacePage() {
+  const { message } = App.useApp();
   const { address, isConnected } = useAccount();
   const [listedInvoices, setListedInvoices] = useState([]);
   const [loading, setLoading] = useState(true);

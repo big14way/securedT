@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, Button, Steps, Result, Typography, Space, Upload, Select, Alert, message, Badge, Tag, Spin } from 'antd';
+import { App, Card, Form, Input, Button, Steps, Result, Typography, Space, Upload, Select, Alert, Badge, Tag, Spin } from 'antd';
 import { 
     UserOutlined, 
     IdcardOutlined, 
@@ -28,6 +28,7 @@ const KYC_LEVELS = {
 };
 
 export default function KYCPage() {
+    const { message } = App.useApp();
     const router = useRouter();
     const [form] = Form.useForm();
     const { address: walletAddress, isConnected } = useWalletAddress();

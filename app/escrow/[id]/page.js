@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Typography, Space, Button, Alert, Tag, Descriptions, Steps, Timeline, message, Slider, InputNumber, Modal, Statistic } from 'antd';
+import { App, Card, Typography, Space, Button, Alert, Tag, Descriptions, Steps, Timeline, Slider, InputNumber, Modal, Statistic } from 'antd';
 import { 
     DollarOutlined, 
     UserOutlined, 
@@ -58,6 +58,7 @@ const getRiskLevel = (score) => {
 };
 
 export default function EscrowDetailsPage() {
+    const { message } = App.useApp();
     const router = useRouter();
     const params = useParams();
     const [loading, setLoading] = useState(true);

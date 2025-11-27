@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Typography, Space, Button, Table, Tag, Alert, Tabs, Modal, InputNumber, message } from 'antd';
+import { App, Card, Typography, Space, Button, Table, Tag, Alert, Tabs, Modal, InputNumber } from 'antd';
 import { 
     EyeOutlined, 
     DollarOutlined, 
@@ -32,6 +32,7 @@ import { siteConfig, PYUSD_TOKEN_ADDRESS } from '../constants';
 const { Title, Paragraph, Text } = Typography;
 
 export default function MyEscrowsPage() {
+    const { message } = App.useApp();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [escrows, setEscrows] = useState([]);
