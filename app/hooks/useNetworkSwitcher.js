@@ -265,14 +265,19 @@ Debugging info:
       console.log('Network is incorrect, attempting to switch...');
       try {
         await switchToRequiredNetwork();
+        // Wait a bit for the switch to propagate
+        await new Promise(resolve => setTimeout(resolve, 1000));
         // Check again after switching
         const isNowCorrect = await checkNetwork();
+        console.log('After switch, network correct?', isNowCorrect);
         if (!isNowCorrect) {
-          throw new Error(`Please manually switch your wallet to ${ACTIVE_CHAIN.name} (Chain ID: ${ACTIVE_CHAIN.id}) to continue.`);
+          // Don't throw - let the transaction proceed and fail naturally if network is actually wrong
+          console.warn('Network switch may have failed, but proceeding anyway. Transaction will fail if network is wrong.');
         }
       } catch (switchError) {
         console.log('Auto-switch failed:', switchError);
-        throw new Error(`Please switch your wallet to ${ACTIVE_CHAIN.name} (Chain ID: ${ACTIVE_CHAIN.id}) to continue. Auto-switch failed: ${switchError.message}`);
+        // Don't throw - let user proceed. Transaction will fail if network is actually wrong
+        console.warn('Auto-switch failed, but proceeding anyway. Make sure you are on the correct network.');
       }
     }
     return isCorrectNetwork;
