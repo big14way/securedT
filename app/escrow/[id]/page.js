@@ -217,19 +217,11 @@ export default function EscrowDetailsPage() {
             }
 
             try {
-                // TODO: Replace with actual contract call
+                // TODO: Connect to real CollateralEscrow contract
+                // For now, set to null to allow basic escrow functionality
                 // const info = await getCollateralInfo(parseInt(params.id));
-                
-                // Mock data for demonstration
-                const mockInfo = {
-                    isCollateralized: true,
-                    suppliedAmount: escrowData.amount,
-                    borrowedAmount: escrowData.amount * 0.6,
-                    availableToBorrow: escrowData.amount * 0.2,
-                    timestamp: Date.now() - 86400000
-                };
-                
-                setCollateralInfo(mockInfo);
+
+                setCollateralInfo(null);
             } catch (error) {
                 console.error('Error loading collateral info:', error);
                 setCollateralInfo(null);
