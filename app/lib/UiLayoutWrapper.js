@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { abbreviate, isAdminAddress } from '../util';
 import { ACTIVE_CHAIN, APP_NAME, siteConfig } from '../constants';
 import StyledComponentsRegistry from './AntdRegistry';
-import { Button, ConfigProvider, Layout } from 'antd';
+import { App, Button, ConfigProvider, Layout } from 'antd';
 import { Content, Footer, Header } from 'antd/es/layout/layout';
 import Image from 'next/image';
 import ConnectButton from './ConnectButton';
@@ -22,7 +22,8 @@ function UiLayoutWrapper({ children }) {
        return (
 	       <StyledComponentsRegistry>
 		       <ConfigProvider theme={antdTheme}>
-			       <Layout>
+			       <App>
+				       <Layout>
 				       <Header style={{ background: '#fff', display: 'flex', alignItems: 'center', padding: 0 }}>
 					       <Navigation />
 					       <span
@@ -53,7 +54,8 @@ function UiLayoutWrapper({ children }) {
 						       {APP_NAME}. {ACTIVE_CHAIN.name} network. <a href="/about">About</a>
 					       </Footer>
 				       )}
-			       </Layout>
+				       </Layout>
+			       </App>
 		       </ConfigProvider>
 	       </StyledComponentsRegistry>
        );
