@@ -89,8 +89,8 @@ export const STABLECOIN_CONFIG = {
         USDC: '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9',
     },
     testnet: {
-        // Mantle Sepolia testnet stablecoin addresses (use faucet tokens or mock)
-        USDT: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', // Note: Update with actual testnet address
+        // Mantle Sepolia testnet - Mock USDT for testing (anyone can mint via faucet())
+        USDT: '0x5d7b6553ad6192a5a0bd2296e8ca118dc2586296', // MockUSDT with faucet
         USDC: '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9', // Note: Update with actual testnet address
     }
 };

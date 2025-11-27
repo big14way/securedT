@@ -1,0 +1,13 @@
+{
+  "network": "Mantle Sepolia Testnet",
+  "chainId": 5003,
+  "mockUSDTAddress": "0x5d7b6553ad6192a5a0bd2296e8ca118dc2586296",
+  "deployer": "0x3C343AD077983371b29fee386bdBC8a92E934C51",
+  "deployedAt": "2025-11-27T06:02:23.896Z",
+  "blockNumber": "31339334",
+  "transactionHash": "0x52af9f6575f46f518e68cf9b6594bcd1662fd6693d08a7b37e88f30e8e388a83",
+  "initialSupply": "1,000,000 USDT",
+  "decimals": 6,
+  "symbol": "USDT",
+  "faucet": "Anyone can call faucet() to get 1000 USDT for testing"
+}
