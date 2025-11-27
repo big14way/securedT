@@ -30,7 +30,6 @@ import { useBlockscout } from '../hooks/useBlockscout';
 import { siteConfig, PYUSD_TOKEN_ADDRESS } from '../constants';
 
 const { Title, Paragraph, Text } = Typography;
-const { TabPane } = Tabs;
 
 export default function MyEscrowsPage() {
     const router = useRouter();
@@ -503,18 +502,19 @@ export default function MyEscrowsPage() {
                 />
             )}
 
-            <Tabs defaultActiveKey="active" size="large"
-                loading={loading}
-            >
-                <TabPane 
-                    tab={
-                        <Space>
-                            <ClockCircleOutlined />
-                            Active Escrows ({activeEscrows.length})
-                        </Space>
-                    } 
-                    key="active"
-                >
+            <Tabs
+                defaultActiveKey="active"
+                size="large"
+                items={[
+                    {
+                        key: 'active',
+                        label: (
+                            <Space>
+                                <ClockCircleOutlined />
+                                Active Escrows ({activeEscrows.length})
+                            </Space>
+                        ),
+                        children: (
                     <Card>
                         <Table
                             columns={columns}
@@ -546,17 +546,17 @@ export default function MyEscrowsPage() {
                             }}
                         />
                     </Card>
-                </TabPane>
-
-                <TabPane 
-                    tab={
-                        <Space>
-                            <CheckCircleOutlined />
-                            Completed ({completedEscrows.length})
-                        </Space>
-                    } 
-                    key="completed"
-                >
+                        )
+                    },
+                    {
+                        key: 'completed',
+                        label: (
+                            <Space>
+                                <CheckCircleOutlined />
+                                Completed ({completedEscrows.length})
+                            </Space>
+                        ),
+                        children: (
                     <Card>
                         <Table
                             columns={columns}
@@ -565,17 +565,17 @@ export default function MyEscrowsPage() {
                             pagination={false}
                         />
                     </Card>
-                </TabPane>
-
-                <TabPane 
-                    tab={
-                        <Space>
-                            <FileTextOutlined />
-                            My Invoices ({invoices.length})
-                        </Space>
-                    } 
-                    key="invoices"
-                >
+                        )
+                    },
+                    {
+                        key: 'invoices',
+                        label: (
+                            <Space>
+                                <FileTextOutlined />
+                                My Invoices ({invoices.length})
+                            </Space>
+                        ),
+                        children: (
                     <Card title="Invoice NFTs" extra={
                         <Button 
                             type="primary"
@@ -693,18 +693,17 @@ export default function MyEscrowsPage() {
                             />
                         )}
                     </Card>
-                </TabPane>
-
-                {isUserFraudOracle && isFraudOracleActive && (
-                    <TabPane 
-                        tab={
+                        )
+                    },
+                    ...(isUserFraudOracle && isFraudOracleActive ? [{
+                        key: 'oracle',
+                        label: (
                             <Space>
                                 <SafetyCertificateTwoTone />
                                 Oracle Functions
                             </Space>
-                        } 
-                        key="oracle"
-                    >
+                        ),
+                        children: (
                         <Card title="Fraud Oracle Dashboard" size="small">
                             <Alert
                                 message="Fraud Oracle Access"
@@ -726,9 +725,10 @@ export default function MyEscrowsPage() {
                                 Click "View Details" on any escrow to access oracle functions.
                             </Paragraph>
                         </Card>
-                    </TabPane>
-                )}
-            </Tabs>
+                        )
+                    }] : [])
+                ]}
+            />
 
             {/* List Invoice Modal */}
             <Modal
