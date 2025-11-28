@@ -2,6 +2,21 @@
 
 > Tokenizing real-world invoices as tradable NFTs with instant liquidity through blockchain-based escrow and compliance on **Mantle Network's ultra-low-cost Layer 2**.
 
+## 🚀 Live Demo
+
+**Production:** [https://online25-main-num51dbzs-big14ways-projects.vercel.app](https://online25-main-num51dbzs-big14ways-projects.vercel.app)
+
+**GitHub Repository:** [https://github.com/big14way/securedT](https://github.com/big14way/securedT)
+
+**Network:** Mantle Sepolia Testnet (Chain ID: 5003)
+
+### Quick Start
+1. Visit the live demo
+2. Connect your wallet (MetaMask, Coinbase, or 300+ via WalletConnect)
+3. Get testnet MNT from [Mantle Faucet](https://faucet.sepolia.mantle.xyz/)
+4. Get testnet USDT from our built-in faucet
+5. Create your first escrow or explore the marketplace!
+
 ## The Problem
 
 **Traditional Invoice Factoring** has high fees (2-5%), centralized approval, slow processing (days to weeks), and high minimums ($100k+). **Crypto Payments** lack buyer protection and compliance integration.
@@ -184,48 +199,63 @@ KEY ARCHITECTURAL COMPONENTS
 
 ✅ DEPLOYED & TESTED CONTRACTS (Mantle Sepolia):
 
-1. SecuredTransferContract (0xb8a1446e1a9feb78c0e83196cda8366a53df5376)
-   → Core escrow logic with USDT
-   → Compliance integration
-   → Invoice NFT auto-minting
-   → Fraud detection hooks
+1. **SecuredTransferContract** - [`0xb07ce703ce01370660d12c963cde0785627ee789`](https://explorer.sepolia.mantle.xyz/address/0xb07ce703ce01370660d12c963cde0785627ee789)
+   - Core escrow logic with USDT
+   - Compliance integration
+   - Invoice NFT auto-minting
+   - Fraud detection hooks
+   - **Status:** ✅ Live & Production Ready
 
-2. InvoiceNFT (0x71f43c6c9598369f94dbd162dadb24c3d8df675c)
-   → ERC-721 tokens for invoices
-   → OpenSea compatible
-   → Tradable on marketplaces
-   → Automatic minting/burning
+2. **InvoiceNFT** - [`0x71f43c6c9598369f94dbd162dadb24c3d8df675c`](https://explorer.sepolia.mantle.xyz/address/0x71f43c6c9598369f94dbd162dadb24c3d8df675c)
+   - ERC-721 tokens for invoices
+   - OpenSea compatible
+   - Tradable on marketplaces
+   - Automatic minting/burning
+   - **Status:** ✅ Minting Working (Token #1 Created)
 
-3. ComplianceOracle (0x45e774cbd5877770bde1324347fc978939c884a3)
-   → 4-level KYC verification
-   → AML risk scoring (0-100)
-   → Transaction limits ($1k-$1M)
-   → Blacklist management
+3. **ComplianceOracle** - [`0x45e774cbd5877770bde1324347fc978939c884a3`](https://explorer.sepolia.mantle.xyz/address/0x45e774cbd5877770bde1324347fc978939c884a3)
+   - 4-level KYC verification
+   - AML risk scoring (0-100)
+   - Transaction limits ($1k-$1M)
+   - Blacklist management
+   - **Status:** ✅ Live & Integrated
 
-4. YieldEscrow (0xdbbe162c7adeec7bb4fe2745b42fcc8b2aba5933)
-   → cmETH integration for 7.2% APY
-   → Agni Finance DEX swaps
-   → Yield distribution (80/15/5)
-   → No unstaking delays
-   → ✅ DEPLOYED & LIVE
+4. **YieldEscrow** - [`0xdbbe162c7adeec7bb4fe2745b42fcc8b2aba5933`](https://explorer.sepolia.mantle.xyz/address/0xdbbe162c7adeec7bb4fe2745b42fcc8b2aba5933)
+   - cmETH integration for 7.2% APY
+   - Agni Finance DEX swaps
+   - Yield distribution (80/15/5)
+   - No unstaking delays
+   - **Status:** ⚠️ Disabled on Testnet (Requires Mainnet DeFi Protocols)
 
-5. CollateralEscrow (0xc8fcb1d31202f2b75cea0ca70d8e00b96c24e296)
-   → 80% Loan-to-Value ratio
-   → INIT Capital integration
-   → Working capital financing
-   → Automatic collateral unwinding
-   → 33 comprehensive tests (>90% coverage)
+5. **CollateralEscrow** - [`0xc8fcb1d31202f2b75cea0ca70d8e00b96c24e296`](https://explorer.sepolia.mantle.xyz/address/0xc8fcb1d31202f2b75cea0ca70d8e00b96c24e296)
+   - 80% Loan-to-Value ratio
+   - INIT Capital integration
+   - Working capital financing
+   - Automatic collateral unwinding
+   - 33 comprehensive tests (>90% coverage)
+   - **Status:** ✅ Live & Tested
 
 🔧 FRONTEND INTEGRATION STATUS:
 
 ✅ Fully Integrated Pages:
-   • /escrow - Create & manage escrows with contract 0xb8a1446e1a9feb78c0e83196cda8366a53df5376
-   • /my-escrows - User dashboard with real-time blockchain data
-   • /marketplace - Invoice NFT trading (0x71f43c6c9598369f94dbd162dadb24c3d8df675c)
-   • /compliance - KYC verification (0x45e774cbd5877770bde1324347fc978939c884a3)
-   • /collateral - Working capital dashboard (ready for contract integration)
-   • /yield - cmETH yield interface (ready for YieldEscrow deployment)
-   • /tutorials - Working capital educational content
+   • **/escrow** - Create & manage escrows (0xb07ce703ce01370660d12c963cde0785627ee789)
+   • **/my-escrows** - User dashboard with real-time blockchain data
+   • **/marketplace** - Invoice NFT trading (0x71f43c6c9598369f94dbd162dadb24c3d8df675c)
+   • **/invoices** - Seller dashboard to list Invoice NFTs for sale (NEW!)
+   • **/compliance** - KYC verification (0x45e774cbd5877770bde1324347fc978939c884a3)
+   • **/collateral** - Working capital dashboard
+   • **/yield** - cmETH yield interface (disabled on testnet)
+   • **/tutorials** - Working capital educational content
+
+📝 Invoice Marketplace Workflow:
+   1. Buyer creates escrow → Invoice NFT automatically minted to seller
+   2. Seller visits **/invoices** page → Lists invoice with discount (e.g. 10%)
+   3. Buyers browse **/marketplace** → Purchase discounted invoices
+   4. Seller receives payment immediately → Buyer receives full amount on escrow release
+
+**Transaction Proof:**
+   - Contract Link: TX `0x862ceaa05f6ef3b84b8e73402bcd107db8cd27cfba4045f4827563dad4f5da17`
+   - First Invoice NFT Minted: Token #1 for Escrow #10007 (300 USDT)
 
 ⚙️ TECHNICAL INTEGRATIONS:
    • WalletConnect v2 - Multi-wallet support (300+ wallets)
@@ -450,10 +480,11 @@ Users trust the immutable contract code and transparent on-chain operations.
 ## Deployed Contracts (Mantle Sepolia Testnet)
 
 ### Core Escrow System
-- **SecuredTransferContract:** [`0xb8a1446e1a9feb78c0e83196cda8366a53df5376`](https://explorer.sepolia.mantle.xyz/address/0xb8a1446e1a9feb78c0e83196cda8366a53df5376)
-  - Deployment: 2025-11-24 22:58:32 UTC
-  - Tx: `0x203e34ee7590dec9702b6a5cae9b3438e9b3d23f859cdcc18b080d0290a4051e`
+- **SecuredTransferContract:** [`0xb07ce703ce01370660d12c963cde0785627ee789`](https://explorer.sepolia.mantle.xyz/address/0xb07ce703ce01370660d12c963cde0785627ee789)
+  - Deployment: 2025-11-27 (Latest)
+  - Tx: [View on Explorer](https://explorer.sepolia.mantle.xyz/address/0xb07ce703ce01370660d12c963cde0785627ee789)
   - Features: USDT escrow, compliance checks, invoice NFT auto-minting
+  - Status: ✅ **Production Ready** - Invoice minting verified working
 
 - **ComplianceOracle:** [`0x45e774cbd5877770bde1324347fc978939c884a3`](https://explorer.sepolia.mantle.xyz/address/0x45e774cbd5877770bde1324347fc978939c884a3)
   - Deployment: 2025-11-24 22:58:32 UTC

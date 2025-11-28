@@ -12,9 +12,9 @@ const { Title, Text, Paragraph } = Typography;
 // ABI for InvoiceNFT contract
 const INVOICE_NFT_ABI = [
   {
-    "inputs": [{" type": "address", "name": "owner"}],
+    "inputs": [{"type": "address", "name": "owner"}],
     "name": "getInvoicesByOwner",
-    "outputs": [{type": "uint256[]"}],
+    "outputs": [{"type": "uint256[]"}],
     "stateMutability": "view",
     "type": "function"
   },
