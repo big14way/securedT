@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Statistic, Table, Tag, Button, Spin, Typography, Space, Tooltip, Progress } from 'antd';
-import { 
-    DollarOutlined, 
-    LineChartOutlined, 
-    ClockCircleOutlined, 
+import {
+    DollarOutlined,
+    LineChartOutlined,
+    ClockCircleOutlined,
     RiseOutlined,
     ThunderboltOutlined,
-    InfoCircleOutlined 
+    InfoCircleOutlined
 } from '@ant-design/icons';
-import { useAccount } from 'wagmi';
 import { formatUnits } from 'viem';
 import { STABLECOIN_DECIMALS } from '../constants';
+import { getBuyerYieldEscrows, isYieldEscrowAvailable } from '../util/yieldEscrowContract';
+import { useWalletAddress } from '../hooks/useWalletAddress';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -20,7 +21,7 @@ const { Title, Text, Paragraph } = Typography;
 const METH_APY = 7.2;
 
 export default function YieldPage() {
-    const { address: walletAddress } = useAccount();
+    const { address: walletAddress } = useWalletAddress();
     const [loading, setLoading] = useState(false);
     const [yieldEscrows, setYieldEscrows] = useState([]);
     const [totalStats, setTotalStats] = useState({
@@ -31,7 +32,7 @@ export default function YieldPage() {
     });
 
     useEffect(() => {
-        if (walletAddress) {
+        if (walletAddress && isYieldEscrowAvailable()) {
             loadYieldData();
         }
     }, [walletAddress]);
@@ -39,46 +40,57 @@ export default function YieldPage() {
     const loadYieldData = async () => {
         setLoading(true);
         try {
-            // Load yield-enabled escrows
-            // TODO: Replace with actual blockchain calls
-            const mockData = [
-                {
-                    escrowId: '10001',
-                    amount: '10000',
-                    depositDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-                    daysActive: 15,
-                    estimatedYield: '29.59', // $10k * 7.2% * (15/365)
-                    projectedYield: '720', // $10k * 7.2%
-                    mETHStaked: '3.2',
-                    status: 'Active'
-                },
-                {
-                    escrowId: '10002',
-                    amount: '5000',
-                    depositDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-                    daysActive: 7,
-                    estimatedYield: '6.90', // $5k * 7.2% * (7/365)
-                    projectedYield: '360', // $5k * 7.2%
-                    mETHStaked: '1.6',
-                    status: 'Active'
-                }
-            ];
+            // Load REAL yield-enabled escrows from blockchain
+            const escrows = await getBuyerYieldEscrows(walletAddress);
 
-            setYieldEscrows(mockData);
+            // Filter only yield-enabled active escrows
+            const yieldEnabledEscrows = escrows.filter(e => e.yieldEnabled && e.status === 0);
 
-            // Calculate totals
-            const tvl = mockData.reduce((sum, e) => sum + parseFloat(e.amount), 0);
-            const totalYield = mockData.reduce((sum, e) => sum + parseFloat(e.estimatedYield), 0);
+            // Transform to table format
+            const tableData = yieldEnabledEscrows.map(escrow => {
+                const amount = parseFloat(escrow.amount);
+                const createdAt = new Date(escrow.createdAt);
+                const daysActive = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+                // Calculate estimated yield: amount * APY * (daysActive / 365)
+                const estimatedYield = amount * (METH_APY / 100) * (daysActive / 365);
+                const projectedYield = amount * (METH_APY / 100); // Full year projection
+
+                return {
+                    escrowId: escrow.id.toString(),
+                    amount: amount.toString(),
+                    depositDate: createdAt,
+                    daysActive,
+                    estimatedYield: estimatedYield.toFixed(2),
+                    projectedYield: projectedYield.toFixed(2),
+                    mETHStaked: escrow.cmETHAmount || '0', // Real cMETH amount from contract
+                    status: escrow.statusText
+                };
+            });
+
+            setYieldEscrows(tableData);
+
+            // Calculate totals from REAL data
+            const tvl = tableData.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+            const totalYield = tableData.reduce((sum, e) => sum + parseFloat(e.estimatedYield), 0);
 
             setTotalStats({
                 tvl,
                 totalYield,
-                activeEscrows: mockData.length,
+                activeEscrows: tableData.length,
                 avgAPY: METH_APY
             });
 
         } catch (error) {
             console.error('Error loading yield data:', error);
+            // On error, show empty state
+            setYieldEscrows([]);
+            setTotalStats({
+                tvl: 0,
+                totalYield: 0,
+                activeEscrows: 0,
+                avgAPY: METH_APY
+            });
         } finally {
             setLoading(false);
         }

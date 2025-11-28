@@ -6,12 +6,16 @@ import { LockOutlined, UserOutlined, DollarOutlined, ThunderboltOutlined, Safety
 import { useRouter } from 'next/navigation';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { createEscrow, isContractAvailable, isFraudOracleConfigured, getComplianceInfo } from '../util/securedTransferContract';
+import { createYieldEscrow, isYieldEscrowAvailable } from '../util/yieldEscrowContract';
 import { getTestUSDT, checkUSDTBalance } from '../util/mockUsdtFaucet';
 import { useWalletClient } from '../hooks/useWalletClient';
 import { useWalletAddress } from '../hooks/useWalletAddress';
 import { useNetworkSwitcher } from '../hooks/useNetworkSwitcher';
 import { useBlockscout } from '../hooks/useBlockscout';
 import { ESCROW_CREATION_STEPS, DEMO_DATA, NETWORK } from '../constants';
+
+// Check if yield escrow is available
+const YIELD_AVAILABLE = isYieldEscrowAvailable();
 import DemoModeAlert from '../lib/DemoModeAlert';
 import ConnectButton from '../lib/ConnectButton';
 import { formatUnits, createPublicClient, http } from 'viem';
@@ -233,13 +237,24 @@ export default function DepositPage() {
                         const dynamicWalletClient = await primaryWallet.getWalletClient();
                         if (dynamicWalletClient) {
                             console.log('Got wallet client from Dynamic, using it directly');
-                            const hash = await createEscrow(
-                                dynamicWalletClient,
-                                values.sellerAddress,
-                                values.amount,
-                                values.description
-                            );
-                            
+
+                            // Use YieldEscrow if yield is enabled and available
+                            const hash = yieldEnabled && isYieldEscrowAvailable()
+                                ? await createYieldEscrow(
+                                    dynamicWalletClient,
+                                    values.sellerAddress,
+                                    values.amount,
+                                    values.description,
+                                    true, // yieldEnabled
+                                    (step) => message.loading({ content: step, key: 'escrow', duration: 0 })
+                                )
+                                : await createEscrow(
+                                    dynamicWalletClient,
+                                    values.sellerAddress,
+                                    values.amount,
+                                    values.description
+                                );
+
                             message.success('Escrow created successfully!');
                             console.log('Transaction hash:', hash);
                             
@@ -331,15 +346,25 @@ export default function DepositPage() {
                 });
                 
                 console.log('Successfully created on-demand wallet client');
-                
+
                 // Use the on-demand client for this transaction
-                const hash = await createEscrow(
-                    onDemandClient,
-                    values.sellerAddress,
-                    values.amount,
-                    values.description
-                );
-                
+                // Use YieldEscrow if yield is enabled and available
+                const hash = yieldEnabled && isYieldEscrowAvailable()
+                    ? await createYieldEscrow(
+                        onDemandClient,
+                        values.sellerAddress,
+                        values.amount,
+                        values.description,
+                        true, // yieldEnabled
+                        (step) => message.loading({ content: step, key: 'escrow', duration: 0 })
+                    )
+                    : await createEscrow(
+                        onDemandClient,
+                        values.sellerAddress,
+                        values.amount,
+                        values.description
+                    );
+
                 message.success('Escrow created successfully!');
                 console.log('Transaction hash:', hash);
                 router.push('/my-escrows');
@@ -367,13 +392,23 @@ export default function DepositPage() {
                 message.loading({ content: step, key: progressKey, duration: 0 });
             };
 
-            const hash = await createEscrow(
-                walletClient,
-                values.sellerAddress,
-                values.amount,
-                values.description,
-                onProgress
-            );
+            // Use YieldEscrow if yield is enabled and available, otherwise use regular escrow
+            const hash = yieldEnabled && isYieldEscrowAvailable()
+                ? await createYieldEscrow(
+                    walletClient,
+                    values.sellerAddress,
+                    values.amount,
+                    values.description,
+                    true, // yieldEnabled
+                    onProgress
+                )
+                : await createEscrow(
+                    walletClient,
+                    values.sellerAddress,
+                    values.amount,
+                    values.description,
+                    onProgress
+                );
 
             // Success!
             message.destroy(progressKey);
@@ -405,20 +440,22 @@ export default function DepositPage() {
         message.success('Demo data loaded! You can now create a test escrow.');
     };
 
-    // Calculate estimated yield for 30 days at 7.2% APY
+    // Calculate estimated yield for UI display (actual yield comes from on-chain cMETH)
+    // This is just an approximation based on ~7.2% APY for 30-day period
     const calculateYield = (amount) => {
         if (!amount || amount <= 0) {
             setEstimatedYield(null);
             return;
         }
 
-        const APY = 0.072; // 7.2%
+        const APY = 0.072; // Approximate 7.2% APY from cMETH
         const days = 30;
         const yearlyYield = amount * APY;
         const dailyYield = yearlyYield / 365;
         const totalYield = dailyYield * days;
 
-        // Split yield: 80% buyer, 15% seller, 5% platform
+        // Display estimated yield split (actual split happens on-chain)
+        // 80% buyer, 15% seller, 5% platform
         setEstimatedYield({
             total: totalYield.toFixed(2),
             buyer: (totalYield * 0.80).toFixed(2),
@@ -610,14 +647,18 @@ export default function DepositPage() {
                                 <Space>
                                     <RiseOutlined style={{ fontSize: 20, color: yieldEnabled ? 'white' : '#667eea' }} />
                                     <Text strong style={{ fontSize: 16, color: yieldEnabled ? 'white' : 'inherit' }}>
-                                        Enable Yield Generation
+                                        Enable Yield Generation {!YIELD_AVAILABLE && <Tag color="orange">Mainnet Only</Tag>}
                                     </Text>
-                                    <Tooltip title="Stake your escrowed USDT in Mantle's mETH Protocol to earn 7.2% APY while maintaining payment security">
+                                    <Tooltip title={YIELD_AVAILABLE
+                                        ? "Stake your escrowed USDT in Mantle's mETH Protocol to earn 7.2% APY while maintaining payment security"
+                                        : "Yield generation requires Mantle mainnet (Agni Finance DEX + cmETH). Currently on testnet - use regular escrow instead."
+                                    }>
                                         <InfoCircleOutlined style={{ color: yieldEnabled ? 'rgba(255,255,255,0.8)' : '#8c8c8c' }} />
                                     </Tooltip>
                                 </Space>
-                                <Switch 
+                                <Switch
                                     checked={yieldEnabled}
+                                    disabled={!YIELD_AVAILABLE}
                                     onChange={(checked) => {
                                         setYieldEnabled(checked);
                                         if (checked) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { App, Card, Row, Col, Statistic, Button, Tag, Modal, InputNumber, Spin, Empty, Typography } from 'antd';
 import { DollarOutlined, ClockCircleOutlined, UserOutlined, ShoppingCartOutlined } from '@ant-design/icons';
-import { useAccount } from 'wagmi';
+import { useWalletAddress } from '../hooks/useWalletAddress';
 import { formatUnits, parseUnits } from 'viem';
 import { STABLECOIN_DECIMALS, siteConfig, STABLECOIN_SYMBOL } from '../constants';
 
@@ -81,7 +81,7 @@ const ERC20_ABI = [
 
 export default function MarketplacePage() {
   const { message } = App.useApp();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useWalletAddress();
   const [listedInvoices, setListedInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
@@ -93,10 +93,9 @@ export default function MarketplacePage() {
   });
 
   useEffect(() => {
-    if (isConnected) {
-      loadListedInvoices();
-    }
-  }, [isConnected]);
+    // Load invoices regardless of connection state - anyone can view the marketplace
+    loadListedInvoices();
+  }, []);
 
   const loadListedInvoices = async () => {
     try {
