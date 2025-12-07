@@ -475,10 +475,24 @@ export default function DepositPage() {
     }, [form, yieldEnabled]);
 
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 24px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <Title level={1}>Create USDT Escrow</Title>
-                <Paragraph style={{ fontSize: '18px', color: '#666' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', padding: '60px 24px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+                <Title level={1} style={{
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '40px',
+                    fontWeight: 800,
+                    marginBottom: '16px'
+                }}>
+                    <span style={{
+                        background: 'linear-gradient(90deg, #00f0ff 0%, #ff00ff 50%, #a855f7 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                    }}>
+                        Create USDT Escrow
+                    </span>
+                </Title>
+                <Paragraph style={{ fontSize: '18px', color: '#94a3b8', maxWidth: '600px', margin: '0 auto' }}>
                     Securely deposit USDT with built-in compliance, fraud protection, and oracle verification on Mantle Network
                 </Paragraph>
             </div>
@@ -753,18 +767,19 @@ export default function DepositPage() {
                         </Space>
                     </Card>
 
-                    <div style={{ 
-                        background: '#f8fafc', 
-                        padding: '16px', 
-                        borderRadius: '8px', 
-                        marginBottom: '24px' 
+                    <div style={{
+                        background: 'rgba(0, 240, 255, 0.05)',
+                        padding: '20px',
+                        borderRadius: '12px',
+                        marginBottom: '24px',
+                        border: '1px solid rgba(0, 240, 255, 0.2)'
                     }}>
-                        <Title level={5}>How it works:</Title>
-                        <ul style={{ color: '#666', margin: 0 }}>
-                            <li>Your USDT will be held securely in a smart contract escrow</li>
-                            {yieldEnabled && <li style={{ color: '#667eea', fontWeight: 500 }}>Your funds will be staked in mETH to earn 7.2% APY during escrow</li>}
-                            <li>Fraud oracles monitor the transaction for any suspicious activity</li>
-                            <li>Funds are released to seller only when transaction is verified safe</li>
+                        <Title level={5} style={{ color: '#00f0ff', marginBottom: '12px' }}>How it works:</Title>
+                        <ul style={{ color: '#94a3b8', margin: 0, paddingLeft: '20px' }}>
+                            <li style={{ marginBottom: '8px' }}>Your USDT will be held securely in a smart contract escrow</li>
+                            {yieldEnabled && <li style={{ color: '#00ff88', fontWeight: 500, marginBottom: '8px' }}>Your funds will be staked in mETH to earn 7.2% APY during escrow</li>}
+                            <li style={{ marginBottom: '8px' }}>Fraud oracles monitor the transaction for any suspicious activity</li>
+                            <li style={{ marginBottom: '8px' }}>Funds are released to seller only when transaction is verified safe</li>
                             <li>Automatic refund if fraud is detected by oracle attestation</li>
                         </ul>
                     </div>

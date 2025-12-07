@@ -19,12 +19,29 @@ import { antdTheme, colors } from '../theme/colors';
 function UiLayoutWrapper({ children }) {
        const pathname = usePathname();
        const isOfferDetails = pathname && pathname.startsWith('/offer/');
+
        return (
 	       <StyledComponentsRegistry>
 		       <ConfigProvider theme={antdTheme}>
 			       <App>
-				       <Layout>
-				       <Header style={{ background: '#fff', display: 'flex', alignItems: 'center', padding: 0 }}>
+				       <Layout style={{
+					       minHeight: '100vh',
+					       background: 'transparent'
+				       }}>
+				       <Header style={{
+					       background: 'rgba(15, 15, 26, 0.85)',
+					       backdropFilter: 'blur(20px) saturate(180%)',
+					       WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+					       borderBottom: '1px solid rgba(0, 240, 255, 0.2)',
+					       boxShadow: '0 4px 30px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 240, 255, 0.05)',
+					       display: 'flex',
+					       alignItems: 'center',
+					       padding: 0,
+					       position: 'sticky',
+					       top: 0,
+					       zIndex: 1000,
+					       height: 64
+				       }}>
 					       <Navigation />
 					       <span
 						       style={{
@@ -40,18 +57,57 @@ function UiLayoutWrapper({ children }) {
 						       <ConnectButton size="middle" />
 					       </span>
 				       </Header>
-				       {/* <span className="float-right bold active-network" style={{ color: '#8c8c8c' }}>
-					       Using network: {ACTIVE_CHAIN.name}&nbsp;
-				       </span> */}
-				       <Content className="container">
+				       <Content className="container" style={{ position: 'relative', zIndex: 1 }}>
 					       <div className="container">{children}</div>
 				       </Content>
 				       {/* Hide Footer on offer details page */}
 				       {!isOfferDetails && (
-					       <Footer style={{ textAlign: 'center' }}>
-						       <hr />
-						       <br />
-						       {APP_NAME}. {ACTIVE_CHAIN.name} network. <a href="/about">About</a>
+					       <Footer style={{
+						       textAlign: 'center',
+						       background: 'rgba(15, 15, 26, 0.85)',
+						       backdropFilter: 'blur(20px)',
+						       WebkitBackdropFilter: 'blur(20px)',
+						       borderTop: '1px solid rgba(0, 240, 255, 0.2)',
+						       color: '#94a3b8',
+						       padding: '24px 50px'
+					       }}>
+						       <div style={{
+							       borderTop: '1px solid rgba(0, 240, 255, 0.1)',
+							       paddingTop: '24px',
+							       marginBottom: '16px'
+						       }} />
+						       <div style={{
+							       display: 'flex',
+							       justifyContent: 'center',
+							       alignItems: 'center',
+							       gap: '8px',
+							       flexWrap: 'wrap'
+						       }}>
+							       <span style={{
+								       background: 'linear-gradient(90deg, #00f0ff, #ff00ff)',
+								       WebkitBackgroundClip: 'text',
+								       WebkitTextFillColor: 'transparent',
+								       backgroundClip: 'text',
+								       fontWeight: 600
+							       }}>{APP_NAME}</span>
+							       <span style={{ color: '#64748b' }}>|</span>
+							       <span style={{
+								       color: '#00f0ff',
+								       fontSize: '13px'
+							       }}>{ACTIVE_CHAIN.name}</span>
+							       <span style={{ color: '#64748b' }}>|</span>
+							       <Link href="/about" style={{
+								       color: '#94a3b8',
+								       transition: 'all 0.3s ease'
+							       }}>About</Link>
+						       </div>
+						       <div style={{
+							       marginTop: '12px',
+							       fontSize: '12px',
+							       color: '#64748b'
+						       }}>
+							       Powered by blockchain technology
+						       </div>
 					       </Footer>
 				       )}
 				       </Layout>
