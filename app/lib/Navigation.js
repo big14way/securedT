@@ -3,16 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Space, Typography, Badge, Tag } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
-import { 
-    HomeOutlined, 
-    PlusOutlined, 
+import {
+    HomeOutlined,
+    PlusOutlined,
     InfoCircleOutlined,
     HistoryOutlined,
     SafetyOutlined,
     DashboardOutlined,
     CheckCircleOutlined,
     ShoppingOutlined,
-    LineChartOutlined
+    LineChartOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons';
 import { useBlockscout } from '../hooks/useBlockscout';
 import { useWalletAddress } from '../hooks/useWalletAddress';
@@ -22,10 +23,10 @@ import { APP_NAME } from '../constants';
 const { Text } = Typography;
 
 const KYC_LEVELS = {
-    0: { name: 'None', color: 'default', icon: '❌' },
-    1: { name: 'Basic', color: 'blue', icon: '✓' },
-    2: { name: 'Advanced', color: 'green', icon: '✓✓' },
-    3: { name: 'Institutional', color: 'gold', icon: '⭐' }
+    0: { name: 'None', color: 'default', icon: null },
+    1: { name: 'Basic', color: '#00f0ff', icon: null },
+    2: { name: 'Advanced', color: '#00ff88', icon: null },
+    3: { name: 'Institutional', color: '#fbbf24', icon: null }
 };
 
 export default function Navigation() {
@@ -35,6 +36,7 @@ export default function Navigation() {
     const { address: walletAddress } = useWalletAddress();
     const [kycLevel, setKycLevel] = useState(0);
     const [loadingKyc, setLoadingKyc] = useState(true);
+    const [hoveredItem, setHoveredItem] = useState(null);
 
     // Load KYC status
     useEffect(() => {
@@ -63,26 +65,30 @@ export default function Navigation() {
         !isEscrowPage && {
             key: 'escrow',
             label: 'Create Escrow',
-            icon: <PlusOutlined />, 
-            path: '/escrow'
+            icon: <PlusOutlined />,
+            path: '/escrow',
+            glowColor: '#00f0ff'
         },
         !isEscrowPage && walletAddress && {
             key: 'my-escrows',
             label: 'My Escrows',
-            icon: <HomeOutlined style={{ color: '#4f4d4c' }} />, 
-            path: '/my-escrows'
+            icon: <HomeOutlined />,
+            path: '/my-escrows',
+            glowColor: '#a855f7'
         },
         walletAddress && {
             key: 'marketplace',
-            label: 'Invoice Marketplace',
+            label: 'Marketplace',
             icon: <ShoppingOutlined />,
-            path: '/marketplace'
+            path: '/marketplace',
+            glowColor: '#ff00ff'
         },
         walletAddress && {
             key: 'yield',
-            label: 'Yield Dashboard',
+            label: 'Yield',
             icon: <LineChartOutlined />,
-            path: '/yield'
+            path: '/yield',
+            glowColor: '#00ff88'
         },
         walletAddress && {
             key: 'kyc',
@@ -90,41 +96,42 @@ export default function Navigation() {
                 <Space size={4}>
                     KYC
                     {!loadingKyc && kycLevel > 0 && (
-                        <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 12 }} />
+                        <CheckCircleOutlined style={{ color: '#00ff88', fontSize: 12 }} />
                     )}
                 </Space>
             ),
             icon: <SafetyOutlined />,
-            path: '/kyc'
+            path: '/kyc',
+            glowColor: '#fbbf24'
         },
         walletAddress && {
             key: 'compliance',
             label: 'Compliance',
             icon: <DashboardOutlined />,
-            path: '/compliance'
+            path: '/compliance',
+            glowColor: '#ec4899'
         },
         {
             key: 'about',
             label: 'About',
-            icon: <InfoCircleOutlined />, 
-            path: '/about'
+            icon: <InfoCircleOutlined />,
+            path: '/about',
+            glowColor: '#00f0ff'
         }
     ].filter(Boolean);
 
-    // Navigation is now always visible
+    const isActive = (path) => pathname === path;
 
     return (
         <div
             style={{
-                background: '#fff',
+                background: 'transparent',
                 padding: 0,
-                // borderBottom removed to avoid double border
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                 overflowX: 'auto',
                 whiteSpace: 'nowrap',
                 minWidth: 0,
-                minHeight: 56,
-                height: 56,
+                minHeight: 64,
+                height: 64,
                 display: 'flex',
                 alignItems: 'center',
             }}
@@ -137,65 +144,136 @@ export default function Navigation() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'nowrap',
-                    gap: 12,
+                    gap: 16,
                     width: '100%',
-                    height: 56,
+                    height: 64,
+                    paddingLeft: 24,
                 }}
             >
+                {/* Logo */}
                 <div
-                    style={{ cursor: 'pointer', flex: '0 0 auto', height: 40, display: 'flex', alignItems: 'center' }}
+                    style={{
+                        cursor: 'pointer',
+                        flex: '0 0 auto',
+                        height: 40,
+                        display: 'flex',
+                        alignItems: 'center',
+                        transition: 'all 0.3s ease'
+                    }}
                     onClick={() => router.push('/')}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                    }}
                 >
                     <Text
                         strong
                         style={{
-                            fontSize: '20px',
-                            color: '#00aef2',
-                            fontWeight: 700,
-                            letterSpacing: '-0.5px'
+                            fontSize: '22px',
+                            fontWeight: 800,
+                            letterSpacing: '1px',
+                            fontFamily: "'Orbitron', sans-serif",
+                            background: 'linear-gradient(90deg, #00f0ff 0%, #ff00ff 50%, #a855f7 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            textShadow: 'none',
+                            filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.3))'
                         }}
                     >
                         {APP_NAME}
                     </Text>
+                    <ThunderboltOutlined
+                        style={{
+                            marginLeft: 6,
+                            color: '#00f0ff',
+                            fontSize: 16,
+                            filter: 'drop-shadow(0 0 5px rgba(0, 240, 255, 0.5))'
+                        }}
+                    />
                 </div>
+
+                {/* Navigation Items */}
                 <div
                     style={{
                         display: 'flex',
                         flex: '1 1 auto',
-                        gap: 24,
+                        gap: 8,
                         overflowX: 'auto',
                         whiteSpace: 'nowrap',
                         minWidth: 0,
                         alignItems: 'center',
+                        marginLeft: 24,
                     }}
                 >
-                    {navItems.map(item => (
-                        <div
-                            key={item.key}
-                            onClick={() => router.push(item.path)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                cursor: 'pointer',
-                                color: pathname === item.path ? '#00aef2' : '#4b5563',
-                                fontWeight: pathname === item.path ? 600 : 500,
-                                fontSize: '16px',
-                                opacity: pathname === item.path ? 1 : 0.85,
-                                borderBottom: pathname === item.path ? '2px solid #00aef2' : '2px solid transparent',
-                                padding: '8px 0',
-                                transition: 'color 0.2s, border-bottom 0.2s',
-                            }}
-                        >
-                            {item.icon}
-                            <span style={{ marginLeft: 8 }}>{item.label}</span>
-                        </div>
-                    ))}
-                    
-                    {/* Blockscout Transactions Button - Shows contract txs if available, otherwise chain txs */}
+                    {navItems.map(item => {
+                        const active = isActive(item.path);
+                        const hovered = hoveredItem === item.key;
+
+                        return (
+                            <div
+                                key={item.key}
+                                onClick={() => router.push(item.path)}
+                                onMouseEnter={() => setHoveredItem(item.key)}
+                                onMouseLeave={() => setHoveredItem(null)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    background: active
+                                        ? `rgba(0, 240, 255, 0.1)`
+                                        : hovered
+                                            ? 'rgba(255, 255, 255, 0.05)'
+                                            : 'transparent',
+                                    border: active
+                                        ? `1px solid ${item.glowColor}`
+                                        : '1px solid transparent',
+                                    color: active ? '#00f0ff' : hovered ? '#ffffff' : '#94a3b8',
+                                    fontWeight: active ? 600 : 500,
+                                    fontSize: '14px',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    boxShadow: active
+                                        ? `0 0 20px rgba(0, 240, 255, 0.2), inset 0 0 20px rgba(0, 240, 255, 0.05)`
+                                        : 'none',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                {/* Glow effect on hover */}
+                                {hovered && !active && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        background: `linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.1), transparent)`,
+                                        animation: 'shimmer 1.5s ease-in-out infinite',
+                                        pointerEvents: 'none'
+                                    }} />
+                                )}
+                                <span style={{
+                                    marginRight: 8,
+                                    fontSize: '16px',
+                                    color: active ? item.glowColor : 'inherit',
+                                    filter: active ? `drop-shadow(0 0 5px ${item.glowColor})` : 'none',
+                                    transition: 'all 0.3s ease'
+                                }}>
+                                    {item.icon}
+                                </span>
+                                <span style={{ position: 'relative', zIndex: 1 }}>{item.label}</span>
+                            </div>
+                        );
+                    })}
+
+                    {/* Blockscout Transactions Button */}
                     <div
                         onClick={() => {
-                            // Prefer showing contract transactions if contract is deployed
-                            const contractAddress = typeof window !== 'undefined' && 
+                            const contractAddress = typeof window !== 'undefined' &&
                                                   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
                             if (contractAddress) {
                                 showContractTransactions(contractAddress);
@@ -203,33 +281,40 @@ export default function Navigation() {
                                 showChainTransactions();
                             }
                         }}
+                        onMouseEnter={() => setHoveredItem('transactions')}
+                        onMouseLeave={() => setHoveredItem(null)}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
                             cursor: 'pointer',
-                            color: '#4b5563',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            background: hoveredItem === 'transactions'
+                                ? 'rgba(255, 0, 255, 0.1)'
+                                : 'transparent',
+                            border: hoveredItem === 'transactions'
+                                ? '1px solid rgba(255, 0, 255, 0.3)'
+                                : '1px solid transparent',
+                            color: hoveredItem === 'transactions' ? '#ff00ff' : '#94a3b8',
                             fontWeight: 500,
-                            fontSize: '16px',
-                            opacity: 0.85,
-                            borderBottom: '2px solid transparent',
-                            padding: '8px 0',
-                            transition: 'color 0.2s, opacity 0.2s',
+                            fontSize: '14px',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
-                        onMouseEnter={(e) => {
-                            e.target.closest('div').style.opacity = '1';
-                            e.target.closest('div').style.color = '#00aef2';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.closest('div').style.opacity = '0.85';
-                            e.target.closest('div').style.color = '#4b5563';
-                        }}
-                        title={process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ? 'View SecuredTransfer Contract Transactions' : 'View Chain Transactions'}
+                        title={process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ? 'View Contract Transactions' : 'View Chain Transactions'}
                     >
-                        <HistoryOutlined />
-                        <span style={{ marginLeft: 8 }}>Transactions</span>
+                        <HistoryOutlined style={{ marginRight: 8, fontSize: '16px' }} />
+                        <span>Txns</span>
                     </div>
                 </div>
             </div>
+
+            {/* Add shimmer animation */}
+            <style jsx>{`
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                }
+            `}</style>
         </div>
     );
 }
