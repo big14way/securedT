@@ -1,9 +1,6 @@
 // Define Mantle chain objects
 import { mantleSepoliaTestnet, mantle } from 'viem/chains';
 
-// Debug: Log contract address from environment
-console.log('🔍 Contract Address from ENV:', process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
-
 export const siteConfig = {
     title: 'SecuredTransfer | Stablecoin Consumer Protection On-Chain',
     name: 'SecuredTransfer',

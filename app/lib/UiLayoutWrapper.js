@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { abbreviate, isAdminAddress } from '../util';
+import { abbreviate } from '../util';
 import { ACTIVE_CHAIN, APP_NAME, siteConfig } from '../constants';
 import StyledComponentsRegistry from './AntdRegistry';
 import { App, Button, ConfigProvider, Layout } from 'antd';

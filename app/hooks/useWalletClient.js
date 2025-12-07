@@ -23,8 +23,7 @@ export function useWalletClient() {
                 .then(provider => {
                     setAsyncProvider(provider);
                 })
-                .catch(error => {
-                    console.error('Failed to get async provider:', error);
+                .catch(() => {
                     setAsyncProvider(null);
                 });
         } else {
@@ -47,18 +46,17 @@ export function useWalletClient() {
         let provider;
         try {
             // Try multiple methods to get the provider from Dynamic.xyz
-            // Wrap each in try-catch to prevent SDK errors from breaking everything
             try {
                 provider = primaryWallet.connector.provider;
             } catch (e) {
-                console.log('provider property failed:', e.message);
+                // Fall through to other methods
             }
 
             if (!provider) {
                 try {
                     provider = primaryWallet.connector.getProvider?.();
                 } catch (e) {
-                    console.log('getProvider() failed:', e.message);
+                    // Fall through to other methods
                 }
             }
 
@@ -111,7 +109,6 @@ export function useWalletClient() {
                 return null;
             }
         } catch (error) {
-            console.error('Error getting provider:', error);
             lastFailedAttemptRef.current = currentAttemptKey;
             return null;
         }
@@ -133,7 +130,6 @@ export function useWalletClient() {
             lastFailedAttemptRef.current = null;
             return client;
         } catch (error) {
-            console.error('Error creating wallet client:', error);
             lastFailedAttemptRef.current = currentAttemptKey;
             return null;
         }

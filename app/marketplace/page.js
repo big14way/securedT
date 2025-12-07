@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { App, Card, Row, Col, Statistic, Button, Tag, Modal, InputNumber, Spin, Empty, Typography } from 'antd';
 import { DollarOutlined, ClockCircleOutlined, UserOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useWalletAddress } from '../hooks/useWalletAddress';
+import { useWalletClient } from '../hooks/useWalletClient';
 import { formatUnits, parseUnits } from 'viem';
 import { STABLECOIN_DECIMALS, siteConfig, STABLECOIN_SYMBOL } from '../constants';
 
@@ -82,6 +83,7 @@ const ERC20_ABI = [
 export default function MarketplacePage() {
   const { message } = App.useApp();
   const { address, isConnected } = useWalletAddress();
+  const walletClient = useWalletClient();
   const [listedInvoices, setListedInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
@@ -124,8 +126,6 @@ export default function MarketplacePage() {
         abi: INVOICE_NFT_ABI,
         functionName: 'getListedInvoices'
       });
-
-      console.log('Listed token IDs:', tokenIds);
 
       // Fetch details for each invoice
       const invoicesData = await Promise.all(
@@ -188,18 +188,17 @@ export default function MarketplacePage() {
   };
 
   const handlePurchaseInvoice = async () => {
-    if (!selectedInvoice || !address) return;
+    if (!selectedInvoice || !address || !walletClient) {
+      if (!walletClient) {
+        message.error('Please connect your wallet first');
+      }
+      return;
+    }
 
     try {
       message.loading('Purchasing invoice...', 0);
 
-      const { createWalletClient, custom, parseUnits: viemParseUnits } = await import('viem');
-      const { ACTIVE_CHAIN, STABLECOIN_ADDRESS } = await import('../constants');
-      
-      const walletClient = createWalletClient({
-        chain: ACTIVE_CHAIN,
-        transport: custom(window.ethereum)
-      });
+      const { STABLECOIN_ADDRESS } = await import('../constants');
 
       const invoiceNFTAddress = process.env.NEXT_PUBLIC_INVOICE_NFT_ADDRESS;
       const listedPrice = selectedInvoice.listedPrice;
@@ -209,33 +208,24 @@ export default function MarketplacePage() {
         address: STABLECOIN_ADDRESS,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [selectedInvoice.currentOwner, listedPrice],
-        account: address
+        args: [selectedInvoice.currentOwner, listedPrice]
       });
-
-      console.log('Approve transaction:', approveTx);
 
       // Step 2: Transfer stablecoin to current owner
       const transferTx = await walletClient.writeContract({
         address: STABLECOIN_ADDRESS,
         abi: ERC20_ABI,
         functionName: 'transferFrom',
-        args: [address, selectedInvoice.currentOwner, listedPrice],
-        account: address
+        args: [address, selectedInvoice.currentOwner, listedPrice]
       });
-
-      console.log('Payment transaction:', transferTx);
 
       // Step 3: Transfer NFT ownership
       const nftTransferTx = await walletClient.writeContract({
         address: invoiceNFTAddress,
         abi: INVOICE_NFT_ABI,
         functionName: 'transferFrom',
-        args: [selectedInvoice.currentOwner, address, BigInt(selectedInvoice.tokenId)],
-        account: address
+        args: [selectedInvoice.currentOwner, address, BigInt(selectedInvoice.tokenId)]
       });
-
-      console.log('NFT transfer transaction:', nftTransferTx);
 
       message.destroy();
       message.success('Invoice purchased successfully!');
