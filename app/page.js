@@ -13,7 +13,7 @@ import {
 	SafetyOutlined,
 	SwapOutlined,
 	LineChartOutlined,
-	ShieldOutlined,
+	SecurityScanOutlined,
 	GlobalOutlined,
 	RocketOutlined,
 	ApiOutlined
@@ -25,7 +25,7 @@ import { colors } from './theme/colors';
 const CHECKLIST_ITEMS = [
 	{
 		text: "Secure USDT escrow with compliance & fraud protection",
-		icon: <ShieldOutlined style={{ color: '#00f0ff' }} />
+		icon: <SecurityScanOutlined style={{ color: '#00f0ff' }} />
 	},
 	{
 		text: "Automated refunds via oracle attestations",
