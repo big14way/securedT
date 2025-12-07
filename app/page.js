@@ -1,13 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { Button, Spin, Row, Col, Space } from 'antd';
-import { APP_DESC, APP_NAME, siteConfig } from './constants';
-import { CheckCircleTwoTone, LockTwoTone, SafetyCertificateTwoTone, EyeTwoTone } from '@ant-design/icons';
-import Logo from './lib/Logo';
+import React from 'react';
+import { Button, Row, Col, Space, Card } from 'antd';
+import { CheckCircleTwoTone, SafetyCertificateOutlined, ThunderboltOutlined, FileProtectOutlined, DollarCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import { colors } from './theme/colors';
+
+const FEATURES = [
+	{
+		icon: <SafetyCertificateOutlined style={{ fontSize: '32px', color: '#00aef2' }} />,
+		title: 'Secure Escrow',
+		description: 'Smart contract-based escrow holds USDT securely until transaction conditions are met.'
+	},
+	{
+		icon: <FileProtectOutlined style={{ fontSize: '32px', color: '#00aef2' }} />,
+		title: 'Invoice NFTs',
+		description: 'Tokenize invoices as ERC-721 NFTs for tradable, verifiable payment claims.'
+	},
+	{
+		icon: <ThunderboltOutlined style={{ fontSize: '32px', color: '#00aef2' }} />,
+		title: 'Instant Liquidity',
+		description: 'Sell invoices on the marketplace for immediate payment at competitive discounts.'
+	},
+	{
+		icon: <DollarCircleOutlined style={{ fontSize: '32px', color: '#00aef2' }} />,
+		title: 'Ultra-Low Fees',
+		description: 'Pay just 0.1-0.5% in fees vs 2-5% with traditional invoice factoring.'
+	}
+];
 
 const CHECKLIST_ITEMS = [
 	"Secure USDT escrow with compliance & fraud protection",
@@ -356,6 +375,109 @@ const Home = () => {
 					}
 				`}</style>
 
+			</div>
+
+			{/* Features Section */}
+			<div style={{ padding: '80px 48px', background: 'white' }}>
+				<div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+					<h2 style={{
+						textAlign: 'center',
+						fontSize: '36px',
+						fontWeight: 'bold',
+						color: '#1f2937',
+						marginBottom: '16px'
+					}}>
+						Why SecuredTransfer?
+					</h2>
+					<p style={{
+						textAlign: 'center',
+						fontSize: '18px',
+						color: '#6b7280',
+						marginBottom: '48px',
+						maxWidth: '600px',
+						margin: '0 auto 48px'
+					}}>
+						Built on Mantle Network for enterprise-grade security with ultra-low transaction costs
+					</p>
+
+					<Row gutter={[32, 32]}>
+						{FEATURES.map((feature, index) => (
+							<Col xs={24} sm={12} lg={6} key={index}>
+								<Card
+									bordered={false}
+									style={{
+										height: '100%',
+										textAlign: 'center',
+										background: '#f8fafc',
+										borderRadius: '16px',
+										transition: 'transform 0.2s, box-shadow 0.2s'
+									}}
+									hoverable
+								>
+									<div style={{ marginBottom: '16px' }}>
+										{feature.icon}
+									</div>
+									<h3 style={{
+										fontSize: '18px',
+										fontWeight: '600',
+										color: '#1f2937',
+										marginBottom: '12px'
+									}}>
+										{feature.title}
+									</h3>
+									<p style={{
+										fontSize: '14px',
+										color: '#6b7280',
+										lineHeight: '1.6',
+										margin: 0
+									}}>
+										{feature.description}
+									</p>
+								</Card>
+							</Col>
+						))}
+					</Row>
+
+					{/* Stats Section */}
+					<Row gutter={[32, 32]} style={{ marginTop: '64px' }}>
+						<Col xs={24} sm={8}>
+							<div style={{ textAlign: 'center' }}>
+								<div style={{ fontSize: '48px', fontWeight: 'bold', color: '#00aef2' }}>~$0.10</div>
+								<div style={{ fontSize: '16px', color: '#6b7280' }}>Average Transaction Cost</div>
+							</div>
+						</Col>
+						<Col xs={24} sm={8}>
+							<div style={{ textAlign: 'center' }}>
+								<div style={{ fontSize: '48px', fontWeight: 'bold', color: '#00aef2' }}>7.2%</div>
+								<div style={{ fontSize: '16px', color: '#6b7280' }}>Yield APY via mETH</div>
+							</div>
+						</Col>
+						<Col xs={24} sm={8}>
+							<div style={{ textAlign: 'center' }}>
+								<div style={{ fontSize: '48px', fontWeight: 'bold', color: '#00aef2' }}>300+</div>
+								<div style={{ fontSize: '16px', color: '#6b7280' }}>Supported Wallets</div>
+							</div>
+						</Col>
+					</Row>
+
+					{/* CTA Section */}
+					<div style={{ textAlign: 'center', marginTop: '64px' }}>
+						<Button
+							type="primary"
+							size="large"
+							onClick={() => router.push('/escrow')}
+							style={{
+								height: '56px',
+								padding: '0 48px',
+								fontSize: '18px',
+								fontWeight: '600',
+								borderRadius: '8px'
+							}}
+						>
+							Get Started Now
+						</Button>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

@@ -137,24 +137,6 @@ export default function DepositPage() {
         }
     };
 
-    // Debug wallet connection state
-    useEffect(() => {
-        console.log('Create Escrow Page - Wallet State:', {
-            primaryWallet: !!primaryWallet,
-            primaryWalletAddress: primaryWallet?.address,
-            user: !!user,
-            userWalletAddress: user?.walletAddress,
-            walletClient: !!walletClient,
-            walletAddress,
-            isConnected,
-            walletType,
-            hasChanged,
-            buttonShouldBeEnabled: !!(primaryWallet && isConnected && walletAddress),
-            buttonCurrentlyDisabled: !primaryWallet || !walletClient,
-            kycLevel,
-            kycLimit
-        });
-    }, [primaryWallet, user, walletClient, walletAddress, isConnected, walletType, hasChanged, kycLevel, kycLimit]);
 
     // Reset hasChanged flag after showing success message
     useEffect(() => {
@@ -169,43 +151,18 @@ export default function DepositPage() {
     }, [walletAddress, hasChanged, resetHasChanged]);
 
     const handleDeposit = async (values) => {
-        // Enhanced wallet connection checks using Dynamic.xyz
-        console.log('Starting escrow creation with wallet state:', {
-            primaryWallet: !!primaryWallet,
-            walletAddress,
-            isConnected,
-            walletClient: !!walletClient,
-            isCorrectNetwork,
-            kycLevel,
-            kycLimit
-        });
-
         if (!primaryWallet || !isConnected || !walletAddress) {
             message.warning('Please connect your wallet to create an escrow');
-            console.log('Wallet connection check failed:', {
-                primaryWallet: !!primaryWallet,
-                isConnected,
-                walletAddress: !!walletAddress
-            });
             return;
         }
 
-        // KYC is optional - protocol is permissionless (Web3 best practice)
-        // Users can create escrows without KYC
-        // KYC only provides compliance badges for those who want them
-
         // Check and switch network if needed
-        console.log('Network check:', { isCorrectNetwork });
         if (!isCorrectNetwork) {
             message.info('Switching to Mantle Sepolia Testnet...');
             try {
                 await ensureCorrectNetwork();
-                console.log('Network switched successfully');
             } catch (networkError) {
-                console.error('Network switch failed:', networkError);
-                // Don't block - let user try anyway (wallet might already be on correct network)
                 message.warning('Network switch failed. If you are already on Mantle Sepolia, you can proceed.');
-                // Continue instead of returning - let the transaction fail if network is actually wrong
             }
         }
 
@@ -221,22 +178,17 @@ export default function DepositPage() {
 
         if (!walletClient) {
             // Try to create wallet client on-demand using Dynamic.xyz + viem approach
-            console.log('Wallet client not available, attempting to create one using Dynamic.xyz approach...');
             try {
                 const { createWalletClient, custom } = await import('viem');
                 const { ACTIVE_CHAIN } = await import('../constants');
-                
-                console.log('Available connector keys:', primaryWallet.connector ? Object.keys(primaryWallet.connector) : []);
-                
+
                 // Method 1: Use Dynamic.xyz recommended approach - get provider from primaryWallet directly
                 let provider = null;
-                
+
                 if (primaryWallet.getWalletClient) {
                     try {
-                        console.log('Trying primaryWallet.getWalletClient()...');
                         const dynamicWalletClient = await primaryWallet.getWalletClient();
                         if (dynamicWalletClient) {
-                            console.log('Got wallet client from Dynamic, using it directly');
 
                             // Use YieldEscrow if yield is enabled and available
                             const hash = yieldEnabled && isYieldEscrowAvailable()
@@ -256,8 +208,7 @@ export default function DepositPage() {
                                 );
 
                             message.success('Escrow created successfully!');
-                            console.log('Transaction hash:', hash);
-                            
+
                             // Show Blockscout transaction notification
                             if (hash) {
                                 await showTransactionToast(hash);
@@ -267,47 +218,40 @@ export default function DepositPage() {
                             return;
                         }
                     } catch (dynamicClientError) {
-                        console.log('primaryWallet.getWalletClient() failed:', dynamicClientError);
+                        // Fall through to other methods
                     }
                 }
-                
+
                 // Method 2: Try to get ethereum provider from Dynamic
                 if (primaryWallet.connector && typeof primaryWallet.connector.getProvider === 'function') {
                     try {
-                        console.log('Trying connector.getProvider()...');
                         provider = await primaryWallet.connector.getProvider();
-                        console.log('Got provider from connector.getProvider():', !!provider);
                     } catch (providerError) {
-                        console.log('connector.getProvider() failed:', providerError);
+                        // Fall through to other methods
                     }
                 }
-                
+
                 // Method 3: Check for ethereum provider in window for browser wallets
                 if (!provider && typeof window !== 'undefined') {
-                    console.log('Checking window.ethereum...');
                     if (window.ethereum) {
                         // For Coinbase Wallet
-                        if (window.ethereum.isCoinbaseWallet || 
+                        if (window.ethereum.isCoinbaseWallet ||
                             (window.ethereum.providers && window.ethereum.providers.find(p => p.isCoinbaseWallet))) {
-                            provider = window.ethereum.isCoinbaseWallet ? 
-                                window.ethereum : 
+                            provider = window.ethereum.isCoinbaseWallet ?
+                                window.ethereum :
                                 window.ethereum.providers.find(p => p.isCoinbaseWallet);
-                            console.log('Found Coinbase provider in window.ethereum');
                         }
                         // Generic fallback
                         else {
                             provider = window.ethereum;
-                            console.log('Using window.ethereum as fallback');
                         }
                     }
                 }
-                
+
                 // Method 4: Deep inspection of connector properties
                 if (!provider && primaryWallet.connector) {
-                    console.log('Trying deep connector inspection...');
                     const connector = primaryWallet.connector;
-                    
-                    // Check all properties that might contain a provider
+
                     const possibleProviderPaths = [
                         'provider', 'ethereum', '_provider', 'walletProvider',
                         'client', '_client', 'signer', '_signer',
@@ -315,47 +259,34 @@ export default function DepositPage() {
                         'wallet.provider', 'wallet.client', 'wallet.ethereum',
                         'options.provider', 'options.client'
                     ];
-                    
+
                     for (const path of possibleProviderPaths) {
                         const value = path.split('.').reduce((obj, key) => obj && obj[key], connector);
                         if (value && (value.request || value.send || value.sendAsync)) {
-                            console.log(`Found potential provider at connector.${path}`);
                             provider = value;
                             break;
                         }
                     }
                 }
-                
+
                 if (!provider) {
-                    // Log detailed connector structure for debugging
-                    console.log('All provider detection methods failed. Detailed connector analysis:');
-                    console.log('Connector keys:', Object.keys(primaryWallet.connector));
-                    console.log('Connector methods:', Object.keys(primaryWallet.connector).filter(key => 
-                        typeof primaryWallet.connector[key] === 'function'));
-                    
-                    throw new Error(`No provider found. Available connector keys: ${Object.keys(primaryWallet.connector).join(', ')}`);
+                    throw new Error('No wallet provider found. Please try disconnecting and reconnecting your wallet.');
                 }
-                
-                console.log('Successfully found provider, creating viem wallet client...');
-                console.log('Provider type:', typeof provider, 'Has request:', !!provider.request);
-                
+
                 const onDemandClient = createWalletClient({
                     account: walletAddress,
                     chain: ACTIVE_CHAIN,
                     transport: custom(provider),
                 });
-                
-                console.log('Successfully created on-demand wallet client');
 
                 // Use the on-demand client for this transaction
-                // Use YieldEscrow if yield is enabled and available
                 const hash = yieldEnabled && isYieldEscrowAvailable()
                     ? await createYieldEscrow(
                         onDemandClient,
                         values.sellerAddress,
                         values.amount,
                         values.description,
-                        true, // yieldEnabled
+                        true,
                         (step) => message.loading({ content: step, key: 'escrow', duration: 0 })
                     )
                     : await createEscrow(
@@ -366,12 +297,10 @@ export default function DepositPage() {
                     );
 
                 message.success('Escrow created successfully!');
-                console.log('Transaction hash:', hash);
                 router.push('/my-escrows');
-                return; // Exit early since we handled the transaction
-                
+                return;
+
             } catch (onDemandError) {
-                console.error('Failed to create on-demand wallet client:', onDemandError);
                 message.error(`Wallet connection issue: ${onDemandError.message}. Please try disconnecting and reconnecting your wallet.`);
                 return;
             }
@@ -379,14 +308,9 @@ export default function DepositPage() {
 
         // If we get here, walletClient should be available
         setLoading(true);
-
-        // Progress message key for updating the same message
         let progressKey = 'escrow-creation';
 
         try {
-            console.log('Creating escrow with values:', values);
-            console.log('Using wallet:', walletType, walletAddress);
-
             // Progress callback to show step-by-step UI updates
             const onProgress = (step) => {
                 message.loading({ content: step, key: progressKey, duration: 0 });
@@ -413,7 +337,6 @@ export default function DepositPage() {
             // Success!
             message.destroy(progressKey);
             message.success('Escrow created successfully!');
-            console.log('Final transaction hash:', hash);
 
             // Show Mantle Explorer transaction notification
             if (hash) {
@@ -423,7 +346,6 @@ export default function DepositPage() {
             // Navigate to my-escrows page
             router.push('/my-escrows');
         } catch (error) {
-            console.error('Deposit failed:', error);
             message.destroy(progressKey);
             message.error(error.message || 'Failed to create escrow');
         } finally {

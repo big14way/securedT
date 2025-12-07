@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { App, Card, Row, Col, Button, Tag, Modal, InputNumber, Empty, Typography, Statistic, Space } from 'antd';
 import { DollarOutlined, ShoppingCartOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useWalletAddress } from '../hooks/useWalletAddress';
+import { useWalletClient } from '../hooks/useWalletClient';
 import { formatUnits, parseUnits } from 'viem';
 import { STABLECOIN_DECIMALS, STABLECOIN_SYMBOL } from '../constants';
 
@@ -50,6 +51,7 @@ const INVOICE_NFT_ABI = [
 export default function MyInvoicesPage() {
   const { message } = App.useApp();
   const { address, isConnected } = useWalletAddress();
+  const walletClient = useWalletClient();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [listModalVisible, setListModalVisible] = useState(false);
@@ -89,8 +91,6 @@ export default function MyInvoicesPage() {
         functionName: 'getInvoicesByOwner',
         args: [address]
       });
-
-      console.log('My Invoice token IDs:', tokenIds);
 
       // Fetch details for each invoice
       const invoicesData = await Promise.all(
@@ -148,16 +148,13 @@ export default function MyInvoicesPage() {
   const handleListInvoice = async () => {
     if (!selectedInvoice || !listPrice) return;
 
+    if (!walletClient) {
+      message.error('Please connect your wallet first');
+      return;
+    }
+
     try {
       message.loading('Listing invoice for sale...', 0);
-
-      const { createWalletClient, custom } = await import('viem');
-      const { ACTIVE_CHAIN } = await import('../constants');
-
-      const walletClient = createWalletClient({
-        chain: ACTIVE_CHAIN,
-        transport: custom(window.ethereum)
-      });
 
       const invoiceNFTAddress = process.env.NEXT_PUBLIC_INVOICE_NFT_ADDRESS;
       const priceInWei = parseUnits(listPrice.toString(), STABLECOIN_DECIMALS);
@@ -166,11 +163,8 @@ export default function MyInvoicesPage() {
         address: invoiceNFTAddress,
         abi: INVOICE_NFT_ABI,
         functionName: 'listInvoiceForSale',
-        args: [BigInt(selectedInvoice.tokenId), priceInWei],
-        account: address
+        args: [BigInt(selectedInvoice.tokenId), priceInWei]
       });
-
-      console.log('List transaction:', hash);
 
       message.destroy();
       message.success('Invoice listed successfully!');
