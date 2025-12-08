@@ -28,6 +28,7 @@ import {
 import { useWalletAddress } from '../hooks/useWalletAddress';
 import { useBlockscout } from '../hooks/useBlockscout';
 import { siteConfig, PYUSD_TOKEN_ADDRESS } from '../constants';
+import DemoModeAlert from '../lib/DemoModeAlert';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -442,17 +443,27 @@ export default function MyEscrowsPage() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px' }}>
             <div style={{ marginBottom: '32px' }}>
                 <Space align="center" style={{ marginBottom: '16px' }}>
-                    <Title level={1} style={{ margin: 0 }}>My Escrows</Title>
+                    <Title level={1} style={{
+                        margin: 0,
+                        fontFamily: "'Orbitron', sans-serif",
+                        background: 'linear-gradient(90deg, #00f0ff 0%, #ff00ff 50%, #a855f7 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                    }}>My Escrows</Title>
                     {isUserFraudOracle && (
                         <Tag color="purple" icon={<SafetyCertificateTwoTone />}>
                             Fraud Oracle
                         </Tag>
                     )}
                 </Space>
-                <Paragraph style={{ fontSize: '16px', color: '#666' }}>
+                <Paragraph style={{ fontSize: '16px', color: '#94a3b8' }}>
                     Manage your USDT escrow transactions with built-in compliance and fraud protection
                 </Paragraph>
             </div>
+
+            {/* Demo Mode Warning */}
+            <DemoModeAlert />
 
             {/* Blockscout Transaction Monitoring */}
             <Card 
