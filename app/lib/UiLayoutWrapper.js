@@ -1,64 +1,66 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { abbreviate, isAdminAddress } from '../util';
-import { ACTIVE_CHAIN, APP_NAME, siteConfig } from '../constants';
+import { ACTIVE_CHAIN, APP_NAME } from '../constants';
 import StyledComponentsRegistry from './AntdRegistry';
-import { App, Button, ConfigProvider, Layout } from 'antd';
-import { Content, Footer, Header } from 'antd/es/layout/layout';
-import Image from 'next/image';
-import ConnectButton from './ConnectButton';
-import NetworkStatus from './NetworkStatus';
-import Logo from './Logo';
-import Navigation from './Navigation';
-import { Theme } from '@ant-design/cssinjs';
-import { antdTheme, colors } from '../theme/colors';
-
+import { App, ConfigProvider, Layout } from 'antd';
+import { Content, Footer } from 'antd/es/layout/layout';
+import ModernNavigation from './ModernNavigation';
+import { modernTheme } from '../theme/modernTheme';
 
 function UiLayoutWrapper({ children }) {
-       const pathname = usePathname();
-       const isOfferDetails = pathname && pathname.startsWith('/offer/');
-       return (
-	       <StyledComponentsRegistry>
-		       <ConfigProvider theme={antdTheme}>
-			       <App>
-				       <Layout>
-				       <Header style={{ background: '#fff', display: 'flex', alignItems: 'center', padding: 0 }}>
-					       <Navigation />
-					       <span
-						       style={{
-							       float: 'right',
-							       right: 20,
-							       position: 'absolute',
-							       display: 'flex',
-							       alignItems: 'center',
-							       gap: '12px'
-						       }}
-					       >
-						       <NetworkStatus showSwitcher={true} />
-						       <ConnectButton size="middle" />
-					       </span>
-				       </Header>
-				       {/* <span className="float-right bold active-network" style={{ color: '#8c8c8c' }}>
-					       Using network: {ACTIVE_CHAIN.name}&nbsp;
-				       </span> */}
-				       <Content className="container">
-					       <div className="container">{children}</div>
-				       </Content>
-				       {/* Hide Footer on offer details page */}
-				       {!isOfferDetails && (
-					       <Footer style={{ textAlign: 'center' }}>
-						       <hr />
-						       <br />
-						       {APP_NAME}. {ACTIVE_CHAIN.name} network. <a href="/about">About</a>
-					       </Footer>
-				       )}
-				       </Layout>
-			       </App>
-		       </ConfigProvider>
-	       </StyledComponentsRegistry>
-       );
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
+
+  return (
+    <StyledComponentsRegistry>
+      <ConfigProvider theme={modernTheme}>
+        <App>
+          <Layout style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+            <ModernNavigation />
+
+            <Content style={{
+              background: isHomePage ? 'transparent' : '#F8FAFC',
+              padding: isHomePage ? 0 : '24px',
+            }}>
+              {children}
+            </Content>
+
+            <Footer style={{
+              textAlign: 'center',
+              background: '#F8FAFC',
+              borderTop: '1px solid #E2E8F0',
+              padding: '24px 50px',
+            }}>
+              <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '16px',
+                }}>
+                  <div>
+                    <strong>{APP_NAME}</strong> · Built on {ACTIVE_CHAIN.name}
+                  </div>
+                  <div style={{ display: 'flex', gap: '24px' }}>
+                    <a href="/about" style={{ color: '#64748B' }}>About</a>
+                    <a href="/tutorials" style={{ color: '#64748B' }}>Tutorials</a>
+                    <a href="https://github.com/big14way/securedT" target="_blank" rel="noopener noreferrer" style={{ color: '#64748B' }}>
+                      GitHub
+                    </a>
+                  </div>
+                </div>
+                <div style={{ marginTop: '16px', color: '#94A3B8', fontSize: '14px' }}>
+                  © 2025 SecuredTransfer. All rights reserved.
+                </div>
+              </div>
+            </Footer>
+          </Layout>
+        </App>
+      </ConfigProvider>
+    </StyledComponentsRegistry>
+  );
 }
 
 export default UiLayoutWrapper;
