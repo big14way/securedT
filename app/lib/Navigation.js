@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button, Space, Typography, Badge, Tag } from 'antd';
+import { Dropdown, Space, Typography } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
 import {
     HomeOutlined,
@@ -13,7 +13,8 @@ import {
     CheckCircleOutlined,
     ShoppingOutlined,
     LineChartOutlined,
-    ThunderboltOutlined
+    ThunderboltOutlined,
+    MenuOutlined
 } from '@ant-design/icons';
 import { useBlockscout } from '../hooks/useBlockscout';
 import { useWalletAddress } from '../hooks/useWalletAddress';
@@ -21,13 +22,6 @@ import { getComplianceInfo, isContractAvailable } from '../util/securedTransferC
 import { APP_NAME } from '../constants';
 
 const { Text } = Typography;
-
-const KYC_LEVELS = {
-    0: { name: 'None', color: 'default', icon: null },
-    1: { name: 'Basic', color: '#00f0ff', icon: null },
-    2: { name: 'Advanced', color: '#00ff88', icon: null },
-    3: { name: 'Institutional', color: '#fbbf24', icon: null }
-};
 
 export default function Navigation() {
     const router = useRouter();
@@ -37,6 +31,7 @@ export default function Navigation() {
     const [kycLevel, setKycLevel] = useState(0);
     const [loadingKyc, setLoadingKyc] = useState(true);
     const [hoveredItem, setHoveredItem] = useState(null);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Load KYC status
     useEffect(() => {
@@ -122,32 +117,63 @@ export default function Navigation() {
 
     const isActive = (path) => pathname === path;
 
+    // Mobile menu items for dropdown
+    const mobileMenuItems = navItems.map(item => ({
+        key: item.key,
+        label: (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {item.icon}
+                <span>{typeof item.label === 'string' ? item.label : 'KYC'}</span>
+            </div>
+        ),
+        onClick: () => {
+            router.push(item.path);
+            setMobileMenuOpen(false);
+        }
+    }));
+
+    // Add transactions to mobile menu
+    mobileMenuItems.push({
+        key: 'transactions',
+        label: (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <HistoryOutlined />
+                <span>Transactions</span>
+            </div>
+        ),
+        onClick: () => {
+            const contractAddress = typeof window !== 'undefined' &&
+                                  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+            if (contractAddress) {
+                showContractTransactions(contractAddress);
+            } else {
+                showChainTransactions();
+            }
+            setMobileMenuOpen(false);
+        }
+    });
+
     return (
         <div
             style={{
                 background: 'transparent',
-                padding: 0,
-                overflowX: 'auto',
-                whiteSpace: 'nowrap',
-                minWidth: 0,
+                padding: '0 16px',
                 minHeight: 64,
                 height: 64,
                 display: 'flex',
                 alignItems: 'center',
+                width: '100%',
             }}
         >
             <div
                 style={{
-                    maxWidth: '1200px',
+                    maxWidth: '1400px',
                     margin: '0 auto',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    flexWrap: 'nowrap',
-                    gap: 16,
                     width: '100%',
-                    height: 64,
-                    paddingLeft: 24,
+                    gap: 16,
                 }}
             >
                 {/* Logo */}
@@ -155,10 +181,10 @@ export default function Navigation() {
                     style={{
                         cursor: 'pointer',
                         flex: '0 0 auto',
-                        height: 40,
                         display: 'flex',
                         alignItems: 'center',
-                        transition: 'all 0.3s ease'
+                        transition: 'all 0.3s ease',
+                        minWidth: 'fit-content'
                     }}
                     onClick={() => router.push('/')}
                     onMouseEnter={(e) => {
@@ -171,7 +197,7 @@ export default function Navigation() {
                     <Text
                         strong
                         style={{
-                            fontSize: '22px',
+                            fontSize: 'clamp(16px, 4vw, 22px)',
                             fontWeight: 800,
                             letterSpacing: '1px',
                             fontFamily: "'Orbitron', sans-serif",
@@ -180,7 +206,8 @@ export default function Navigation() {
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text',
                             textShadow: 'none',
-                            filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.3))'
+                            filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.3))',
+                            whiteSpace: 'nowrap'
                         }}
                     >
                         {APP_NAME}
@@ -189,23 +216,22 @@ export default function Navigation() {
                         style={{
                             marginLeft: 6,
                             color: '#00f0ff',
-                            fontSize: 16,
+                            fontSize: 'clamp(14px, 3vw, 16px)',
                             filter: 'drop-shadow(0 0 5px rgba(0, 240, 255, 0.5))'
                         }}
                     />
                 </div>
 
-                {/* Navigation Items */}
+                {/* Desktop Navigation - Hidden on mobile */}
                 <div
+                    className="desktop-nav"
                     style={{
                         display: 'flex',
                         flex: '1 1 auto',
-                        gap: 8,
-                        overflowX: 'auto',
-                        whiteSpace: 'nowrap',
-                        minWidth: 0,
+                        gap: 6,
                         alignItems: 'center',
-                        marginLeft: 24,
+                        justifyContent: 'center',
+                        overflow: 'hidden',
                     }}
                 >
                     {navItems.map(item => {
@@ -222,7 +248,7 @@ export default function Navigation() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     cursor: 'pointer',
-                                    padding: '8px 16px',
+                                    padding: '6px 12px',
                                     borderRadius: '8px',
                                     background: active
                                         ? `rgba(0, 240, 255, 0.1)`
@@ -234,16 +260,16 @@ export default function Navigation() {
                                         : '1px solid transparent',
                                     color: active ? '#00f0ff' : hovered ? '#ffffff' : '#94a3b8',
                                     fontWeight: active ? 600 : 500,
-                                    fontSize: '14px',
+                                    fontSize: '13px',
                                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                     boxShadow: active
                                         ? `0 0 20px rgba(0, 240, 255, 0.2), inset 0 0 20px rgba(0, 240, 255, 0.05)`
                                         : 'none',
                                     position: 'relative',
-                                    overflow: 'hidden'
+                                    overflow: 'hidden',
+                                    whiteSpace: 'nowrap'
                                 }}
                             >
-                                {/* Glow effect on hover */}
                                 {hovered && !active && (
                                     <div style={{
                                         position: 'absolute',
@@ -257,8 +283,8 @@ export default function Navigation() {
                                     }} />
                                 )}
                                 <span style={{
-                                    marginRight: 8,
-                                    fontSize: '16px',
+                                    marginRight: 6,
+                                    fontSize: '14px',
                                     color: active ? item.glowColor : 'inherit',
                                     filter: active ? `drop-shadow(0 0 5px ${item.glowColor})` : 'none',
                                     transition: 'all 0.3s ease'
@@ -270,7 +296,7 @@ export default function Navigation() {
                         );
                     })}
 
-                    {/* Blockscout Transactions Button */}
+                    {/* Transactions Button */}
                     <div
                         onClick={() => {
                             const contractAddress = typeof window !== 'undefined' &&
@@ -287,7 +313,7 @@ export default function Navigation() {
                             display: 'flex',
                             alignItems: 'center',
                             cursor: 'pointer',
-                            padding: '8px 16px',
+                            padding: '6px 12px',
                             borderRadius: '8px',
                             background: hoveredItem === 'transactions'
                                 ? 'rgba(255, 0, 255, 0.1)'
@@ -297,22 +323,81 @@ export default function Navigation() {
                                 : '1px solid transparent',
                             color: hoveredItem === 'transactions' ? '#ff00ff' : '#94a3b8',
                             fontWeight: 500,
-                            fontSize: '14px',
+                            fontSize: '13px',
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            whiteSpace: 'nowrap'
                         }}
                         title={process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ? 'View Contract Transactions' : 'View Chain Transactions'}
                     >
-                        <HistoryOutlined style={{ marginRight: 8, fontSize: '16px' }} />
+                        <HistoryOutlined style={{ marginRight: 6, fontSize: '14px' }} />
                         <span>Txns</span>
                     </div>
                 </div>
+
+                {/* Mobile Menu Button - Shown on mobile */}
+                <div className="mobile-nav" style={{ flex: '0 0 auto' }}>
+                    <Dropdown
+                        menu={{ items: mobileMenuItems }}
+                        trigger={['click']}
+                        open={mobileMenuOpen}
+                        onOpenChange={setMobileMenuOpen}
+                        placement="bottomRight"
+                        overlayStyle={{
+                            minWidth: 200,
+                        }}
+                    >
+                        <div
+                            style={{
+                                cursor: 'pointer',
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                background: mobileMenuOpen ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
+                                border: mobileMenuOpen ? '1px solid #00f0ff' : '1px solid transparent',
+                                color: mobileMenuOpen ? '#00f0ff' : '#94a3b8',
+                                transition: 'all 0.3s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}
+                        >
+                            <MenuOutlined style={{ fontSize: '18px' }} />
+                            <span style={{ fontSize: '13px', fontWeight: 500 }}>Menu</span>
+                        </div>
+                    </Dropdown>
+                </div>
             </div>
 
-            {/* Add shimmer animation */}
+            {/* Responsive CSS */}
             <style jsx>{`
                 @keyframes shimmer {
                     0% { transform: translateX(-100%); }
                     100% { transform: translateX(100%); }
+                }
+
+                .desktop-nav {
+                    display: flex;
+                }
+
+                .mobile-nav {
+                    display: none;
+                }
+
+                /* Tablet and smaller screens */
+                @media (max-width: 1200px) {
+                    .desktop-nav {
+                        gap: 4px;
+                    }
+                }
+
+                /* Mobile screens - show hamburger menu */
+                @media (max-width: 968px) {
+                    .desktop-nav {
+                        display: none;
+                    }
+
+                    .mobile-nav {
+                        display: block;
+                    }
                 }
             `}</style>
         </div>

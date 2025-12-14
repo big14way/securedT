@@ -95,6 +95,16 @@ export const createEscrow = async (walletClient, seller, amount, description, on
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
         console.log('Escrow created successfully. Receipt:', receipt);
 
+        // Verify the transaction was successful
+        if (receipt.status === 'reverted') {
+            throw new Error('Transaction reverted - escrow creation failed');
+        }
+
+        console.log('✅ Escrow creation confirmed on-chain');
+        console.log('Transaction status:', receipt.status);
+        console.log('Block number:', receipt.blockNumber);
+        console.log('Gas used:', receipt.gasUsed?.toString());
+
         return hash;
     } catch (error) {
         console.error('Error creating escrow:', error);
@@ -265,7 +275,10 @@ export const getBuyerEscrows = async (buyerAddress) => {
         }
 
         const contractAddress = getContractAddress();
-        
+
+        console.log('🔍 Fetching buyer escrows for:', buyerAddress);
+        console.log('Using contract address:', contractAddress);
+
         const escrowIds = await publicClient.readContract({
             address: contractAddress,
             abi: SECUREDTRANSFER_CONTRACT.abi,
@@ -273,11 +286,14 @@ export const getBuyerEscrows = async (buyerAddress) => {
             args: [buyerAddress]
         });
 
+        console.log('Found escrow IDs:', escrowIds.map(id => id.toString()));
+
         // Fetch details for each escrow
         const escrows = await Promise.all(
             escrowIds.map(id => getEscrow(Number(id)))
         );
 
+        console.log(`✅ Loaded ${escrows.length} buyer escrows`);
         return escrows;
     } catch (error) {
         console.error('Error getting buyer escrows:', error);
@@ -292,6 +308,8 @@ export const getSellerEscrows = async (sellerAddress) => {
         if (!isContractAvailable()) {
             throw new Error('Contract not available - running in demo mode');
         }
+
+        console.log('🔍 Fetching seller escrows for:', sellerAddress);
 
         const contractAddress = getContractAddress();
         
