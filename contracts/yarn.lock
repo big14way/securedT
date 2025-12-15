@@ -40,10 +40,10 @@
   resolved "https://registry.npmjs.org/@adraffy/ens-normalize/-/ens-normalize-1.10.1.tgz"
   integrity sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==
 
-"@esbuild/darwin-x64@0.25.11":
+"@esbuild/linux-x64@0.25.11":
   version "0.25.11"
-  resolved "https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.25.11.tgz"
-  integrity sha512-+hfp3yfBalNEpTGp9loYgbknjR695HkqtY3d3/JjSRUyPg/xd6q+mQqIb5qdywnDxRZykIHs3axEqU6l1+oWEQ==
+  resolved "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.11.tgz"
+  integrity sha512-HSFAT4+WYjIhrHxKBwGmOOSpphjYkcswF449j6EjsjbinTZbp8PJtjsVK1XFJStdzXdy/jaddAep2FGY+wyFAQ==
 
 "@ethersproject/abi@^5.8.0":
   version "5.8.0"
@@ -864,13 +864,9 @@ fast-equals@^5.0.1:
   integrity sha512-6rxyATwPCkaFIL3JLqw8qXqMpIZ942pTX/tbQFkRsDGblS8tNGtlUauA/+mt6RUfqn/4MoEr+WDkYoIQbibWuQ==
 
 "forge-std@github:foundry-rs/forge-std#v1.9.4":
-  version "1.9.4"
-  resolved "git+ssh://git@github.com/foundry-rs/forge-std.git#1eea5bae12ae557d589f9f0f0edae2faa47cb262"
-
-fsevents@~2.3.3:
-  version "2.3.3"
-  resolved "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz"
-  integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
+  version "1.12.0"
+  resolved "git+ssh://git@github.com/foundry-rs/forge-std.git"
+  integrity sha512-aAffpJDp58vhEDLZKiUCQ/nIBEwskwUW3pQJQJZqy7K+TpwS4WVyjfkdhn31Q65hiFXQ3F3qbvz6cRYjcoMMYw==
 
 get-tsconfig@^4.7.5:
   version "4.12.0"
