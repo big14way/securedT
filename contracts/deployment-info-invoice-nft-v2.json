@@ -1,0 +1,24 @@
+{
+  "network": "Mantle Sepolia Testnet",
+  "chainId": 5003,
+  "timestamp": "2025-12-15T08:58:14.527Z",
+  "version": "v2",
+  "contracts": {
+    "InvoiceNFT": "0x362acd4c78d9e44e68dd3d2634c945d683d7ef25",
+    "SecuredTransferContract": "0xb07ce703ce01370660d12c963cde0785627ee789",
+    "Stablecoin": "0x5d7b6553ad6192a5a0bd2296e8ca118dc2586296",
+    "PlatformWallet": "0x3C343AD077983371b29fee386bdBC8a92E934C51"
+  },
+  "features": [
+    "purchaseInvoice() - Atomic purchases",
+    "updateListingPrice() - Price updates",
+    "calculatePotentialReturn() - Profit/APR calculation",
+    "getMarketStats() - Market statistics",
+    "1% platform fee on sales"
+  ],
+  "transactions": {
+    "deploy": "0xf3d9ca6fcade686e0bc69ed9f6e2d453c5bfa3b08430a7d203cd2926242d1e7d",
+    "linkToSecuredTransfer": "0x1e9b8e8d1bf1d226056e9580b104de8b479115dd287943449382de2be645b767",
+    "updateSecuredTransfer": "0x727e7c8fb42684911870f7f6afe2aa9f9e98165248be609202ebf8878f2db504"
+  }
+}

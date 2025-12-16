@@ -244,13 +244,36 @@ export default function InvoicesPage() {
     try {
       setLoading(true);
       const invoiceNFTAddress = process.env.NEXT_PUBLIC_INVOICE_NFT_ADDRESS;
+
+      console.log('🔍 DEBUG: Loading invoices for wallet:', address);
+      console.log('🔍 DEBUG: InvoiceNFT contract address:', invoiceNFTAddress);
+      console.log('');
+      console.log('📋 KNOWN WALLETS WITH INVOICES:');
+      console.log('   Wallet 1: 0x81e9aA254Ff408458A7267Df3469198f5045A561 (has Invoice #2 - 100 USDT)');
+      console.log('   Wallet 2: 0x208B2660e5F62CDca21869b389c5aF9E7f0faE89 (has Invoice #3 - 400 USDT)');
+      console.log('');
+      console.log('⚠️  YOUR WALLET:', address);
+      console.log('⚠️  Does your wallet match one of the above? (case-insensitive)');
+      const hasMatch = address?.toLowerCase() === '0x81e9aA254Ff408458A7267Df3469198f5045A561'.toLowerCase() ||
+                       address?.toLowerCase() === '0x208B2660e5F62CDca21869b389c5aF9E7f0faE89'.toLowerCase();
+      console.log(hasMatch ? '✅ MATCH FOUND!' : '❌ NO MATCH - This wallet has no invoices');
+      console.log('');
+
       if (!invoiceNFTAddress) { message.warning('Invoice NFT contract not deployed yet'); setLoading(false); return; }
 
       const { createPublicClient, http } = await import('viem');
       const { ACTIVE_CHAIN } = await import('../constants');
       const publicClient = createPublicClient({ chain: ACTIVE_CHAIN, transport: http() });
 
+      console.log('🔍 DEBUG: Calling getInvoicesByOwner...');
+      console.log('🔍 DEBUG: Exact address being queried:', address);
+      console.log('🔍 DEBUG: Address lowercase:', address.toLowerCase());
+      console.log('🔍 DEBUG: Expected address lowercase:', '0x208B2660e5F62CDca21869b389c5aF9E7f0faE89'.toLowerCase());
+      console.log('🔍 DEBUG: Addresses match?', address.toLowerCase() === '0x208B2660e5F62CDca21869b389c5aF9E7f0faE89'.toLowerCase());
+
       const tokenIds = await publicClient.readContract({ address: invoiceNFTAddress, abi: INVOICE_NFT_ABI, functionName: 'getInvoicesByOwner', args: [address] });
+      console.log('🔍 DEBUG: Token IDs returned:', tokenIds.map(id => id.toString()).join(', ') || 'NONE');
+      console.log('🔍 DEBUG: Token IDs array length:', tokenIds.length);
 
       const invoicesData = await Promise.all(
         tokenIds.map(async (tokenId) => {
@@ -262,9 +285,12 @@ export default function InvoicesPage() {
           };
         })
       );
+
+      console.log('✅ DEBUG: Successfully loaded', invoicesData.length, 'invoices');
       setInvoices(invoicesData);
     } catch (error) {
-      console.error('Error loading invoices:', error);
+      console.error('❌ ERROR loading invoices:', error);
+      console.error('Error details:', error.message, error.cause);
       message.error('Failed to load your invoices');
     } finally {
       setLoading(false);
