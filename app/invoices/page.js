@@ -17,6 +17,7 @@ import {
   SwapOutlined
 } from '@ant-design/icons';
 import { useWalletAddress } from '../hooks/useWalletAddress';
+import { useNetworkSwitcher } from '../hooks/useNetworkSwitcher';
 import { formatUnits, parseUnits } from 'viem';
 import { STABLECOIN_DECIMALS, STABLECOIN_SYMBOL } from '../constants';
 
@@ -221,6 +222,7 @@ const SellerInvoiceCard = ({ invoice, onList, onUnlist, onUpdatePrice }) => {
 export default function InvoicesPage() {
   const { message } = App.useApp();
   const { address, isConnected } = useWalletAddress();
+  const { ensureCorrectNetwork } = useNetworkSwitcher();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [listModalVisible, setListModalVisible] = useState(false);
@@ -244,20 +246,9 @@ export default function InvoicesPage() {
     try {
       setLoading(true);
       const invoiceNFTAddress = process.env.NEXT_PUBLIC_INVOICE_NFT_ADDRESS;
+      const escrowContractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
-      console.log('🔍 DEBUG: Loading invoices for wallet:', address);
-      console.log('🔍 DEBUG: InvoiceNFT contract address:', invoiceNFTAddress);
-      console.log('');
-      console.log('📋 KNOWN WALLETS WITH INVOICES:');
-      console.log('   Wallet 1: 0x81e9aA254Ff408458A7267Df3469198f5045A561 (has Invoice #2 - 100 USDT)');
-      console.log('   Wallet 2: 0x208B2660e5F62CDca21869b389c5aF9E7f0faE89 (has Invoice #3 - 400 USDT)');
-      console.log('');
-      console.log('⚠️  YOUR WALLET:', address);
-      console.log('⚠️  Does your wallet match one of the above? (case-insensitive)');
-      const hasMatch = address?.toLowerCase() === '0x81e9aA254Ff408458A7267Df3469198f5045A561'.toLowerCase() ||
-                       address?.toLowerCase() === '0x208B2660e5F62CDca21869b389c5aF9E7f0faE89'.toLowerCase();
-      console.log(hasMatch ? '✅ MATCH FOUND!' : '❌ NO MATCH - This wallet has no invoices');
-      console.log('');
+      console.log('🔍 Loading invoices for wallet:', address);
 
       if (!invoiceNFTAddress) { message.warning('Invoice NFT contract not deployed yet'); setLoading(false); return; }
 
@@ -265,32 +256,123 @@ export default function InvoicesPage() {
       const { ACTIVE_CHAIN } = await import('../constants');
       const publicClient = createPublicClient({ chain: ACTIVE_CHAIN, transport: http() });
 
-      console.log('🔍 DEBUG: Calling getInvoicesByOwner...');
-      console.log('🔍 DEBUG: Exact address being queried:', address);
-      console.log('🔍 DEBUG: Address lowercase:', address.toLowerCase());
-      console.log('🔍 DEBUG: Expected address lowercase:', '0x208B2660e5F62CDca21869b389c5aF9E7f0faE89'.toLowerCase());
-      console.log('🔍 DEBUG: Addresses match?', address.toLowerCase() === '0x208B2660e5F62CDca21869b389c5aF9E7f0faE89'.toLowerCase());
+      // Method 1: Get invoices where user is the current NFT owner
+      console.log('🔍 Checking NFT ownership...');
+      const ownedTokenIds = await publicClient.readContract({
+        address: invoiceNFTAddress,
+        abi: INVOICE_NFT_ABI,
+        functionName: 'getInvoicesByOwner',
+        args: [address]
+      });
+      console.log('📋 Owned token IDs:', ownedTokenIds.map(id => id.toString()).join(', ') || 'NONE');
 
-      const tokenIds = await publicClient.readContract({ address: invoiceNFTAddress, abi: INVOICE_NFT_ABI, functionName: 'getInvoicesByOwner', args: [address] });
-      console.log('🔍 DEBUG: Token IDs returned:', tokenIds.map(id => id.toString()).join(', ') || 'NONE');
-      console.log('🔍 DEBUG: Token IDs array length:', tokenIds.length);
+      // Method 2: Also check escrows where user is the seller (they should have received the invoice NFT)
+      // This handles the case where the user created an escrow as seller
+      let sellerEscrowIds = [];
+      if (escrowContractAddress) {
+        try {
+          const ESCROW_ABI = [{
+            "inputs": [{"type": "address", "name": "seller"}],
+            "name": "getSellerEscrows",
+            "outputs": [{"type": "uint256[]"}],
+            "stateMutability": "view",
+            "type": "function"
+          }];
 
-      const invoicesData = await Promise.all(
-        tokenIds.map(async (tokenId) => {
-          const invoice = await publicClient.readContract({ address: invoiceNFTAddress, abi: INVOICE_NFT_ABI, functionName: 'getInvoice', args: [tokenId] });
-          return {
-            tokenId: tokenId.toString(), escrowId: invoice.escrowId.toString(), amount: invoice.amount,
-            dueDate: invoice.dueDate, issuer: invoice.issuer, payer: invoice.payer, currentOwner: invoice.currentOwner,
-            status: Number(invoice.status), listedPrice: invoice.listedPrice, createdAt: invoice.createdAt
-          };
+          sellerEscrowIds = await publicClient.readContract({
+            address: escrowContractAddress,
+            abi: ESCROW_ABI,
+            functionName: 'getSellerEscrows',
+            args: [address]
+          });
+          console.log('📋 Seller escrow IDs:', sellerEscrowIds.map(id => id.toString()).join(', ') || 'NONE');
+        } catch (e) {
+          console.log('Could not fetch seller escrows:', e.message);
+        }
+      }
+
+      // Get token IDs from seller escrows
+      const ESCROW_TO_TOKEN_ABI = [{
+        "inputs": [{"type": "uint256", "name": "escrowId"}],
+        "name": "getTokenByEscrow",
+        "outputs": [{"type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      }];
+
+      const sellerTokenIds = await Promise.all(
+        sellerEscrowIds.map(async (escrowId) => {
+          try {
+            const tokenId = await publicClient.readContract({
+              address: invoiceNFTAddress,
+              abi: ESCROW_TO_TOKEN_ABI,
+              functionName: 'getTokenByEscrow',
+              args: [escrowId]
+            });
+            return tokenId;
+          } catch {
+            return BigInt(0);
+          }
         })
       );
 
-      console.log('✅ DEBUG: Successfully loaded', invoicesData.length, 'invoices');
-      setInvoices(invoicesData);
+      // Combine and deduplicate token IDs
+      const allTokenIds = [...new Set([
+        ...ownedTokenIds.map(id => id.toString()),
+        ...sellerTokenIds.filter(id => id > 0n).map(id => id.toString())
+      ])];
+
+      console.log('📋 Combined unique token IDs:', allTokenIds.join(', ') || 'NONE');
+
+      // Fetch invoice details for all tokens
+      const invoicesData = await Promise.all(
+        allTokenIds.map(async (tokenIdStr) => {
+          try {
+            const tokenId = BigInt(tokenIdStr);
+            const invoice = await publicClient.readContract({
+              address: invoiceNFTAddress,
+              abi: INVOICE_NFT_ABI,
+              functionName: 'getInvoice',
+              args: [tokenId]
+            });
+
+            // Check if user is the current owner or the original issuer
+            const isOwner = invoice.currentOwner.toLowerCase() === address.toLowerCase();
+            const isIssuer = invoice.issuer.toLowerCase() === address.toLowerCase();
+
+            // Only include if user is owner or issuer
+            if (!isOwner && !isIssuer) {
+              console.log(`Skipping token ${tokenIdStr} - user is neither owner nor issuer`);
+              return null;
+            }
+
+            return {
+              tokenId: tokenIdStr,
+              escrowId: invoice.escrowId.toString(),
+              amount: invoice.amount,
+              dueDate: invoice.dueDate,
+              issuer: invoice.issuer,
+              payer: invoice.payer,
+              currentOwner: invoice.currentOwner,
+              status: Number(invoice.status),
+              listedPrice: invoice.listedPrice,
+              createdAt: invoice.createdAt,
+              isOwner,
+              isIssuer
+            };
+          } catch (e) {
+            console.log(`Error fetching invoice ${tokenIdStr}:`, e.message);
+            return null;
+          }
+        })
+      );
+
+      // Filter out null entries
+      const validInvoices = invoicesData.filter(inv => inv !== null);
+      console.log('✅ Successfully loaded', validInvoices.length, 'invoices');
+      setInvoices(validInvoices);
     } catch (error) {
       console.error('❌ ERROR loading invoices:', error);
-      console.error('Error details:', error.message, error.cause);
       message.error('Failed to load your invoices');
     } finally {
       setLoading(false);
@@ -304,10 +386,46 @@ export default function InvoicesPage() {
     if (!selectedInvoice || !address) return;
     try {
       setProcessing(true);
+      message.loading({ content: 'Checking network...', key: 'list' });
+
+      const { ACTIVE_CHAIN } = await import('../constants');
+      const targetChainIdHex = `0x${ACTIVE_CHAIN.id.toString(16)}`;
+
+      // Check current chain and switch if needed
+      if (window.ethereum) {
+        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (currentChainId !== targetChainIdHex) {
+          message.loading({ content: 'Please switch to Mantle Sepolia Testnet...', key: 'list' });
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: targetChainIdHex }],
+            });
+          } catch (switchError) {
+            // Chain not added, try to add it
+            if (switchError.code === 4902) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: targetChainIdHex,
+                  chainName: ACTIVE_CHAIN.name,
+                  nativeCurrency: ACTIVE_CHAIN.nativeCurrency,
+                  rpcUrls: ACTIVE_CHAIN.rpcUrls.default.http,
+                  blockExplorerUrls: [ACTIVE_CHAIN.blockExplorers.default.url],
+                }],
+              });
+            } else {
+              throw switchError;
+            }
+          }
+          // Wait for network switch to complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
       message.loading({ content: 'Listing invoice for sale...', key: 'list' });
 
       const { createWalletClient, custom, createPublicClient, http } = await import('viem');
-      const { ACTIVE_CHAIN } = await import('../constants');
       const walletClient = createWalletClient({ chain: ACTIVE_CHAIN, transport: custom(window.ethereum) });
       const publicClient = createPublicClient({ chain: ACTIVE_CHAIN, transport: http() });
 
@@ -319,7 +437,19 @@ export default function InvoicesPage() {
       const tx = await walletClient.writeContract({ address: invoiceNFTAddress, abi: INVOICE_NFT_ABI, functionName: 'listInvoiceForSale', args: [BigInt(selectedInvoice.tokenId), listPriceWei], account: address });
       await publicClient.waitForTransactionReceipt({ hash: tx });
 
-      message.success({ content: 'Invoice listed successfully!', key: 'list' });
+      const explorerUrl = `https://sepolia.mantlescan.xyz/tx/${tx}`;
+      message.success({
+        content: (
+          <span>
+            Invoice listed successfully!{' '}
+            <a href={explorerUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>
+              View on Explorer →
+            </a>
+          </span>
+        ),
+        key: 'list',
+        duration: 8
+      });
       setListModalVisible(false);
       loadInvoices();
     } catch (error) {
@@ -334,6 +464,17 @@ export default function InvoicesPage() {
     if (!selectedInvoice || !address) return;
     try {
       setProcessing(true);
+      message.loading({ content: 'Checking network...', key: 'update' });
+
+      // Ensure we're on the correct network before proceeding
+      try {
+        await ensureCorrectNetwork();
+      } catch (networkError) {
+        message.error({ content: 'Please switch to Mantle Sepolia Testnet in your wallet', key: 'update' });
+        setProcessing(false);
+        return;
+      }
+
       message.loading({ content: 'Updating listing price...', key: 'update' });
 
       const { createWalletClient, custom, createPublicClient, http } = await import('viem');
@@ -347,7 +488,19 @@ export default function InvoicesPage() {
       const tx = await walletClient.writeContract({ address: invoiceNFTAddress, abi: INVOICE_NFT_ABI, functionName: 'updateListingPrice', args: [BigInt(selectedInvoice.tokenId), newPriceWei], account: address });
       await publicClient.waitForTransactionReceipt({ hash: tx });
 
-      message.success({ content: 'Price updated successfully!', key: 'update' });
+      const explorerUrl = `https://sepolia.mantlescan.xyz/tx/${tx}`;
+      message.success({
+        content: (
+          <span>
+            Price updated successfully!{' '}
+            <a href={explorerUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>
+              View on Explorer →
+            </a>
+          </span>
+        ),
+        key: 'update',
+        duration: 8
+      });
       setUpdatePriceModalVisible(false);
       loadInvoices();
     } catch (error) {
@@ -360,6 +513,16 @@ export default function InvoicesPage() {
 
   const handleUnlist = async (invoice) => {
     try {
+      message.loading({ content: 'Checking network...', key: 'unlist' });
+
+      // Ensure we're on the correct network before proceeding
+      try {
+        await ensureCorrectNetwork();
+      } catch (networkError) {
+        message.error({ content: 'Please switch to Mantle Sepolia Testnet in your wallet', key: 'unlist' });
+        return;
+      }
+
       message.loading({ content: 'Unlisting invoice...', key: 'unlist' });
 
       const { createWalletClient, custom, createPublicClient, http } = await import('viem');
@@ -371,7 +534,19 @@ export default function InvoicesPage() {
       const tx = await walletClient.writeContract({ address: invoiceNFTAddress, abi: INVOICE_NFT_ABI, functionName: 'unlistInvoice', args: [BigInt(invoice.tokenId)], account: address });
       await publicClient.waitForTransactionReceipt({ hash: tx });
 
-      message.success({ content: 'Invoice unlisted successfully!', key: 'unlist' });
+      const explorerUrl = `https://sepolia.mantlescan.xyz/tx/${tx}`;
+      message.success({
+        content: (
+          <span>
+            Invoice unlisted successfully!{' '}
+            <a href={explorerUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>
+              View on Explorer →
+            </a>
+          </span>
+        ),
+        key: 'unlist',
+        duration: 8
+      });
       loadInvoices();
     } catch (error) {
       console.error('Error unlisting invoice:', error);
@@ -422,7 +597,21 @@ export default function InvoicesPage() {
         message={<span style={{ fontWeight: 600, color: 'var(--text-primary)' }}><ThunderboltOutlined /> Invoice Factoring</span>}
         description={<span style={{ color: 'var(--text-secondary)' }}>List your invoices at a discount to receive immediate payment. Buyers purchase your invoices and receive the full amount when the escrow is released.</span>}
         type="info" showIcon={false}
-        style={{ background: 'rgba(0, 240, 255, 0.05)', border: '1px solid var(--neon-cyan)', borderRadius: '12px', marginBottom: '32px' }}
+        style={{ background: 'rgba(0, 240, 255, 0.05)', border: '1px solid var(--neon-cyan)', borderRadius: '12px', marginBottom: '16px' }}
+      />
+
+      {/* Ownership Info */}
+      <Alert
+        message={<span style={{ fontWeight: 600, color: 'var(--text-primary)' }}><InfoCircleOutlined /> How Invoice Ownership Works</span>}
+        description={
+          <span style={{ color: 'var(--text-secondary)' }}>
+            When an escrow is created, the <strong>seller</strong> receives an Invoice NFT representing their right to receive payment.
+            To see your invoices here, you must be the seller in an escrow transaction (someone else deposits funds to pay you).
+            The buyer and seller cannot be the same wallet address.
+          </span>
+        }
+        type="warning" showIcon={false}
+        style={{ background: 'rgba(255, 165, 0, 0.05)', border: '1px solid rgba(255, 165, 0, 0.3)', borderRadius: '12px', marginBottom: '32px' }}
       />
 
       {/* Stats Row */}
@@ -464,8 +653,34 @@ export default function InvoicesPage() {
         </div>
       ) : filteredInvoices.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '80px 0' }}>
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<span style={{ color: 'var(--text-secondary)' }}>{invoices.length === 0 ? "You don't have any invoice NFTs yet" : "No invoices match this filter"}</span>} />
-          {invoices.length === 0 && <Button type="primary" icon={<FileTextOutlined />} size="large" href="/escrow" style={{ marginTop: '24px' }}>Create an Escrow</Button>}
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <div style={{ color: 'var(--text-secondary)' }}>
+                {invoices.length === 0 ? (
+                  <>
+                    <p style={{ marginBottom: '8px' }}>You don't have any invoice NFTs yet.</p>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                      Invoice NFTs are minted to sellers when escrows are created.<br />
+                      To receive an invoice, someone needs to create an escrow with your wallet address as the seller.
+                    </p>
+                  </>
+                ) : (
+                  "No invoices match this filter"
+                )}
+              </div>
+            }
+          />
+          {invoices.length === 0 && (
+            <div style={{ marginTop: '24px' }}>
+              <Paragraph style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '13px' }}>
+                Want to test the invoice system? Use a second wallet to create an escrow with this wallet as the seller.
+              </Paragraph>
+              <Button type="default" icon={<WalletOutlined />} size="large" href="/my-escrows" style={{ marginRight: '12px' }}>
+                View My Escrows
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <Row gutter={[20, 20]}>
