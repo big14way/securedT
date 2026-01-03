@@ -35,69 +35,17 @@ const config = createConfig({
 const queryClient = new QueryClient();
 
 const DynamicWrapper = ({ children }) => {
+  // Log environment ID on client side for debugging
+  if (typeof window !== 'undefined') {
+    console.log('Dynamic ENV ID:', process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID);
+    console.log('Origin:', window.location.origin);
+  }
+
   return (
     <DynamicContextProvider
       settings={{
-        // Environment ID provided by user
         environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID || "80c9ac91-1cc0-454c-a570-9901c4eaef92",
         walletConnectors: [EthereumWalletConnectors],
-        appName: "SecuredTransfer",
-        appLogoUrl: undefined, // Use text branding instead of logo
-        primaryColor: "#00aef2",
-        borderRadius: 8,
-        // Privacy and legal
-        privacyPolicyUrl: "https://github.com/big14way/securedT",
-        termsOfServiceUrl: "https://github.com/big14way/securedT",
-        // WalletConnect configuration
-        walletConnectPreferences: {
-          projectId: WALLETCONNECT_PROJECT_ID,
-        },
-        // Network configuration - Mantle Networks
-        overrides: {
-          evmNetworks: [
-            {
-              chainId: 5003,
-              name: 'Mantle Sepolia Testnet',
-              rpcUrls: ['https://rpc.sepolia.mantle.xyz'],
-              nativeCurrency: {
-                name: 'MNT',
-                symbol: 'MNT',
-                decimals: 18,
-              },
-              blockExplorerUrls: ['https://explorer.sepolia.mantle.xyz'],
-              vanityName: 'Mantle Sepolia',
-              networkId: 5003,
-            },
-            {
-              chainId: 5000,
-              name: 'Mantle Mainnet',
-              rpcUrls: ['https://rpc.mantle.xyz'],
-              nativeCurrency: {
-                name: 'MNT',
-                symbol: 'MNT',
-                decimals: 18,
-              },
-              blockExplorerUrls: ['https://explorer.mantle.xyz'],
-              vanityName: 'Mantle',
-              networkId: 5000,
-            },
-          ],
-        },
-        // Recommended wallets with WalletConnect support
-        recommendedWallets: [
-          {
-            walletKey: 'metamask',
-          },
-          {
-            walletKey: 'walletconnect',
-          },
-          {
-            walletKey: 'coinbase',
-          },
-          {
-            walletKey: 'rabby',
-          },
-        ],
       }}
     >
       <WagmiProvider config={config}>
