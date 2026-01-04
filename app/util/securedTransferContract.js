@@ -81,7 +81,9 @@ export const createEscrow = async (walletClient, seller, amount, description, on
 
         // Step 2: Create the escrow
         if (onProgress) onProgress('Creating escrow...');
+        const account = await getAccountFromWallet(walletClient);
         const hash = await walletClient.writeContract({
+            account,
             address: contractAddress,
             abi: SECUREDTRANSFER_CONTRACT.abi,
             functionName: 'deposit',
@@ -113,6 +115,36 @@ export const createEscrow = async (walletClient, seller, amount, description, on
     }
 };
 
+// Helper to get account from wallet client
+const getAccountFromWallet = async (walletClient) => {
+    // If wallet client already has an account, use it
+    if (walletClient.account) {
+        return walletClient.account;
+    }
+
+    // Otherwise, get addresses from the wallet
+    try {
+        const addresses = await walletClient.getAddresses();
+        if (addresses && addresses.length > 0) {
+            return addresses[0];
+        }
+    } catch (error) {
+        console.log('getAddresses failed, trying requestAddresses:', error.message);
+    }
+
+    // Try requesting addresses (triggers wallet popup if needed)
+    try {
+        const addresses = await walletClient.requestAddresses();
+        if (addresses && addresses.length > 0) {
+            return addresses[0];
+        }
+    } catch (error) {
+        console.log('requestAddresses failed:', error.message);
+    }
+
+    throw new Error('Could not get account from wallet. Please ensure your wallet is connected and authorized.');
+};
+
 // Approve USDT token spending
 export const approveToken = async (walletClient, amount) => {
     try {
@@ -121,7 +153,10 @@ export const approveToken = async (walletClient, amount) => {
         }
 
         const contractAddress = getContractAddress();
-        
+        const account = await getAccountFromWallet(walletClient);
+
+        console.log('Approving token with account:', account);
+
         // ERC20 ABI for approve function
         const ERC20_ABI = [
             {
@@ -137,6 +172,7 @@ export const approveToken = async (walletClient, amount) => {
         ];
 
         const hash = await walletClient.writeContract({
+            account,
             address: PYUSD_TOKEN_ADDRESS,
             abi: ERC20_ABI,
             functionName: 'approve',
@@ -159,8 +195,10 @@ export const releaseEscrow = async (walletClient, escrowId) => {
         }
 
         const contractAddress = getContractAddress();
-        
+        const account = await getAccountFromWallet(walletClient);
+
         const hash = await walletClient.writeContract({
+            account,
             address: contractAddress,
             abi: SECUREDTRANSFER_CONTRACT.abi,
             functionName: 'release',
@@ -183,8 +221,10 @@ export const refundEscrow = async (walletClient, escrowId) => {
         }
 
         const contractAddress = getContractAddress();
-        
+        const account = await getAccountFromWallet(walletClient);
+
         const hash = await walletClient.writeContract({
+            account,
             address: contractAddress,
             abi: SECUREDTRANSFER_CONTRACT.abi,
             functionName: 'refund',
@@ -409,8 +449,10 @@ export const markFraud = async (walletClient, escrowId) => {
         }
 
         const contractAddress = getContractAddress();
-        
+        const account = await getAccountFromWallet(walletClient);
+
         const hash = await walletClient.writeContract({
+            account,
             address: contractAddress,
             abi: SECUREDTRANSFER_CONTRACT.abi,
             functionName: 'markFraud',
@@ -433,8 +475,10 @@ export const updateFraudOracle = async (walletClient, newOracleAddress) => {
         }
 
         const contractAddress = getContractAddress();
-        
+        const account = await getAccountFromWallet(walletClient);
+
         const hash = await walletClient.writeContract({
+            account,
             address: contractAddress,
             abi: SECUREDTRANSFER_CONTRACT.abi,
             functionName: 'updateFraudOracle',

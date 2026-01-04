@@ -7,137 +7,95 @@ import { useMemo, useEffect, useState, useRef } from "react";
 
 export function useWalletClient() {
     const { primaryWallet, user } = useDynamicContext();
-    const [asyncProvider, setAsyncProvider] = useState(null);
-    const lastFailedAttemptRef = useRef(null);
-    
-    // Extract only stable primitive values for useMemo dependencies
+    const [dynamicClient, setDynamicClient] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const lastAttemptRef = useRef(null);
+
     const walletAddress = primaryWallet?.address || user?.walletAddress || '';
-    const connectorKey = primaryWallet?.connector?.key || '';
     const hasWallet = !!primaryWallet;
-    const hasConnector = !!primaryWallet?.connector;
 
-    // Handle async provider retrieval
+    // Prefer Dynamic's built-in getWalletClient() which handles authorization properly
     useEffect(() => {
-        if (primaryWallet?.connector?.getWalletProvider) {
-            primaryWallet.connector.getWalletProvider()
-                .then(provider => {
-                    setAsyncProvider(provider);
-                })
-                .catch(error => {
-                    console.error('Failed to get async provider:', error);
-                    setAsyncProvider(null);
-                });
-        } else {
-            setAsyncProvider(null);
-        }
-    }, [primaryWallet?.connector, connectorKey]);
+        const getClient = async () => {
+            if (!primaryWallet || !walletAddress) {
+                setDynamicClient(null);
+                return;
+            }
 
-    const walletClient = useMemo(() => {
-        if (!hasWallet || !hasConnector) {
-            return null;
-        }
-        
-        // Prevent repeated failed attempts for the same configuration
-        const currentAttemptKey = `${connectorKey}-${walletAddress}`;
-        if (lastFailedAttemptRef.current === currentAttemptKey) {
-            return null;
-        }
-        
-        // Get provider - different wallets expose this differently
-        let provider;
-        try {
-            // Try multiple methods to get the provider from Dynamic.xyz
-            // Wrap each in try-catch to prevent SDK errors from breaking everything
+            const attemptKey = `${walletAddress}-${primaryWallet.connector?.key}`;
+            if (lastAttemptRef.current === attemptKey && dynamicClient) {
+                return; // Already have a client for this wallet
+            }
+
+            setIsLoading(true);
             try {
-                provider = primaryWallet.connector.provider;
-            } catch (e) {
-                console.log('provider property failed:', e.message);
-            }
-
-            if (!provider) {
-                try {
-                    provider = primaryWallet.connector.getProvider?.();
-                } catch (e) {
-                    console.log('getProvider() failed:', e.message);
-                }
-            }
-
-            if (!provider) {
-                provider = primaryWallet.connector.ethereum ||
-                           primaryWallet.connector._provider ||
-                           asyncProvider;
-            }
-            
-            // For Coinbase wallet, sometimes we need to get it from window.ethereum
-            if (!provider && (connectorKey === 'coinbasewallet' || connectorKey === 'coinbase')) {
-                if (typeof window !== 'undefined' && window.ethereum) {
-                    // Check if this is Coinbase wallet
-                    if (window.ethereum.isCoinbaseWallet || window.ethereum.selectedProvider?.isCoinbaseWallet) {
-                        provider = window.ethereum.isCoinbaseWallet ? window.ethereum : window.ethereum.selectedProvider;
+                // Method 1: Use Dynamic's getWalletClient (preferred - handles auth properly)
+                if (primaryWallet.getWalletClient) {
+                    const client = await primaryWallet.getWalletClient();
+                    if (client) {
+                        console.log('Got wallet client from Dynamic.xyz');
+                        lastAttemptRef.current = attemptKey;
+                        setDynamicClient(client);
+                        setIsLoading(false);
+                        return;
                     }
                 }
-            }
-            
-            // Additional Coinbase wallet detection methods
-            if (!provider && (connectorKey === 'coinbasewallet' || connectorKey === 'coinbase')) {
-                const connector = primaryWallet.connector;
-                if (connector) {
-                    const potentialProviders = [
-                        connector.provider,
-                        connector.getProvider?.(),
-                        connector.ethereum,
-                        connector._provider,
-                        connector.wallet?.provider,
-                        connector.sdk?.provider
-                    ];
-                    
-                    for (const potentialProvider of potentialProviders) {
-                        if (potentialProvider) {
-                            provider = potentialProvider;
-                            break;
+
+                // Method 2: Get provider and create client with proper account setup
+                let provider = null;
+
+                // Try connector methods
+                if (primaryWallet.connector) {
+                    const connector = primaryWallet.connector;
+
+                    // Try async getProvider first
+                    if (typeof connector.getProvider === 'function') {
+                        try {
+                            provider = await connector.getProvider();
+                        } catch (e) {
+                            console.log('getProvider() failed:', e.message);
                         }
                     }
+
+                    // Try sync properties
+                    if (!provider) {
+                        provider = connector.provider || connector.ethereum || connector._provider;
+                    }
                 }
-                
-                // Try window.coinbaseWalletExtension
-                if (!provider && typeof window !== 'undefined' && window.coinbaseWalletExtension) {
-                    provider = window.coinbaseWalletExtension;
+
+                // Fallback to window.ethereum
+                if (!provider && typeof window !== 'undefined' && window.ethereum) {
+                    provider = window.ethereum;
                 }
+
+                if (provider) {
+                    // Request account access to ensure authorization
+                    try {
+                        await provider.request({ method: 'eth_requestAccounts' });
+                    } catch (authError) {
+                        console.log('Account authorization request failed:', authError.message);
+                    }
+
+                    // Create wallet client WITHOUT setting account - let provider manage it
+                    const client = createWalletClient({
+                        chain: ACTIVE_CHAIN,
+                        transport: custom(provider),
+                    });
+
+                    console.log('Created wallet client with provider');
+                    lastAttemptRef.current = attemptKey;
+                    setDynamicClient(client);
+                }
+            } catch (error) {
+                console.error('Error getting wallet client:', error);
+                setDynamicClient(null);
+            } finally {
+                setIsLoading(false);
             }
-            
-            if (!provider) {
-                // Mark this attempt as failed to prevent repeated tries
-                lastFailedAttemptRef.current = currentAttemptKey;
-                return null;
-            }
-        } catch (error) {
-            console.error('Error getting provider:', error);
-            lastFailedAttemptRef.current = currentAttemptKey;
-            return null;
-        }
+        };
 
-        // Ensure we have a valid provider before creating wallet client
-        if (!provider) {
-            lastFailedAttemptRef.current = currentAttemptKey;
-            return null;
-        }
+        getClient();
+    }, [primaryWallet, walletAddress, hasWallet]);
 
-        try {
-            const client = createWalletClient({
-                account: walletAddress,
-                chain: ACTIVE_CHAIN,
-                transport: custom(provider),
-            });
-            
-            // Reset failed attempts on success
-            lastFailedAttemptRef.current = null;
-            return client;
-        } catch (error) {
-            console.error('Error creating wallet client:', error);
-            lastFailedAttemptRef.current = currentAttemptKey;
-            return null;
-        }
-    }, [walletAddress, connectorKey, hasWallet, hasConnector, asyncProvider]);
-
-    return walletClient;
+    return dynamicClient;
 }

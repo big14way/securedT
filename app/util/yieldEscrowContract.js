@@ -141,6 +141,33 @@ export const getYieldStatusText = (status) => {
     }
 };
 
+// Helper to get account from wallet client
+const getAccountFromWallet = async (walletClient) => {
+    if (walletClient.account) {
+        return walletClient.account;
+    }
+
+    try {
+        const addresses = await walletClient.getAddresses();
+        if (addresses && addresses.length > 0) {
+            return addresses[0];
+        }
+    } catch (error) {
+        console.log('getAddresses failed, trying requestAddresses:', error.message);
+    }
+
+    try {
+        const addresses = await walletClient.requestAddresses();
+        if (addresses && addresses.length > 0) {
+            return addresses[0];
+        }
+    } catch (error) {
+        console.log('requestAddresses failed:', error.message);
+    }
+
+    throw new Error('Could not get account from wallet. Please ensure your wallet is connected and authorized.');
+};
+
 // Approve USDT token spending for YieldEscrow contract
 export const approveYieldEscrowToken = async (walletClient, amount) => {
     try {
@@ -149,6 +176,7 @@ export const approveYieldEscrowToken = async (walletClient, amount) => {
         }
 
         const contractAddress = getYieldEscrowAddress();
+        const account = await getAccountFromWallet(walletClient);
 
         // ERC20 ABI for approve function
         const ERC20_ABI = [
@@ -165,6 +193,7 @@ export const approveYieldEscrowToken = async (walletClient, amount) => {
         ];
 
         const hash = await walletClient.writeContract({
+            account,
             address: PYUSD_TOKEN_ADDRESS,
             abi: ERC20_ABI,
             functionName: 'approve',
@@ -210,7 +239,9 @@ export const createYieldEscrow = async (walletClient, seller, amount, descriptio
 
         // Step 2: Create the yield escrow
         if (onProgress) onProgress(yieldEnabled ? 'Creating yield-enabled escrow (swapping to cMETH)...' : 'Creating escrow...');
+        const account = await getAccountFromWallet(walletClient);
         const hash = await walletClient.writeContract({
+            account,
             address: contractAddress,
             abi: YIELD_ESCROW_ABI,
             functionName: 'deposit',
@@ -324,8 +355,10 @@ export const releaseYieldEscrow = async (walletClient, escrowId) => {
         }
 
         const contractAddress = getYieldEscrowAddress();
+        const account = await getAccountFromWallet(walletClient);
 
         const hash = await walletClient.writeContract({
+            account,
             address: contractAddress,
             abi: YIELD_ESCROW_ABI,
             functionName: 'release',
@@ -348,8 +381,10 @@ export const refundYieldEscrow = async (walletClient, escrowId) => {
         }
 
         const contractAddress = getYieldEscrowAddress();
+        const account = await getAccountFromWallet(walletClient);
 
         const hash = await walletClient.writeContract({
+            account,
             address: contractAddress,
             abi: YIELD_ESCROW_ABI,
             functionName: 'refund',
