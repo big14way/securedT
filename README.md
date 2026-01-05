@@ -4,7 +4,7 @@
 
 ## 🚀 Live Demo
 
-**Production:** [https://online25-main-num51dbzs-big14ways-projects.vercel.app](https://online25-main-num51dbzs-big14ways-projects.vercel.app)
+**Production:** [https://online25-main.vercel.app](https://online25-main.vercel.app)
 
 **GitHub Repository:** [https://github.com/big14way/securedT](https://github.com/big14way/securedT)
 
